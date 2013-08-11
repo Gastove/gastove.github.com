@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[My Octopress Blog]]></title>
-  <link href="http://Gastove.github.io/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Code | My Octopress Blog]]></title>
+  <link href="http://Gastove.github.io/blog/categories/code/atom.xml" rel="self"/>
   <link href="http://Gastove.github.io/"/>
   <updated>2013-08-11T11:01:36-07:00</updated>
   <id>http://Gastove.github.io/</id>
@@ -35,22 +35,9 @@
 
 <h3>The Gist</h3>
 
-<div><script src='https://gist.github.com/6201942.js'></script>
+<p><div><script src='https://gist.github.com/6201942.js'></script>
 <noscript><pre><code></code></pre></noscript></div>
-
-
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[O HAI]]></title>
-    <link href="http://Gastove.github.io/blog/2013/08/11/o-hai/"/>
-    <updated>2013-08-11T10:39:00-07:00</updated>
-    <id>http://Gastove.github.io/blog/2013/08/11/o-hai</id>
-    <content type="html"><![CDATA[<p>Well, fascinating. I&rsquo;ve got a blog again now. I haven&rsquo;t had one of these in a bit; no time, no reason, really. I used to blog about food &mdash; but those days are not these days. Maybe I&rsquo;ll write about food again?</p>
-
-<p>Anyways. This is mostly blather-based Lorem Ipsum. This blog needs some CSS, and quick; I want to make sure this thing looks good on the Mobiles and the Small Screens, so I needs some content. More soon.</p>
+</p>
 ]]></content>
   </entry>
   
