@@ -3,11 +3,11 @@
 # ----------------------- #
 
 url: http://Gastove.github.io
-title: My Octopress Blog
-subtitle: A blogging framework for hackers.
-author: Your Name
+title: Strangely Specific and Very Odd
+subtitle: The (Sometimes) Professional Blog of Ross M. Donaldson
+author: Ross M. Donaldson
 simple_search: http://google.com/search
-description:
+description: I blog about this and that, but mostly this. Code, Data Science, Analytics, Cooking, and Bicycles, inclusive.
 
 # Default date format is "ordinal" (resulting in "July 22nd 2007")
 # You can customize the format as defined in
@@ -33,12 +33,17 @@ destination: public
 plugins: plugins
 code_dir: downloads/code
 category_dir: blog/categories
-markdown: rdiscount
-rdiscount:
-  extensions:
-    - autolink
-    - footnotes
-    - smart
+markdown: kramdown
+kramdown:
+	use_coderay: true
+	coderay:
+		coderay_line_numbers: table
+		coderay_css: class
+#rdiscount:
+#  extensions:
+#    - autolink
+#    - footnotes
+#    - smart
 pygments: false # default python pygments have been replaced by pygments.rb
 
 paginate: 10          # Posts per page on the blog index
