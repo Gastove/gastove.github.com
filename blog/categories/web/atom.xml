@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Strangely Specific and Very Odd]]></title>
-  <link href="http://Gastove.github.io/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Web | Strangely Specific and Very Odd]]></title>
+  <link href="http://Gastove.github.io/blog/categories/web/atom.xml" rel="self"/>
   <link href="http://Gastove.github.io/"/>
   <updated>2013-08-11T15:42:44-07:00</updated>
   <id>http://Gastove.github.io/</id>
@@ -73,42 +73,6 @@
 <p>I’m pretty much a CSS n00b, so it’s entirely likely there’s something derpy I’m doing/not getting with this. If any Octopress ninjas out in Blogland have a clearer idea of what’s going on than I do, <em>please</em>… oh wait. This theme doesn’t support comments. </p>
 
 <p>Tweet at me. That’s it. <a href="http://www.twitter.com/Gastove">With this handy link</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Pure Show-And-Tell: My First Gist]]></title>
-    <link href="http://Gastove.github.io/blog/2013/08/11/pure-show-and-tell-my-first-gist/"/>
-    <updated>2013-08-11T10:53:00-07:00</updated>
-    <id>http://Gastove.github.io/blog/2013/08/11/pure-show-and-tell-my-first-gist</id>
-    <content type="html"><![CDATA[<p>And now, a barefaced excuse to muck about with Octopress markdown and plugins. Presenting: my first gist. Do you care? The whole works (and some verbiage) after the cut.</p>
-
-<!--more-->
-
-<p>While ambling about the internet trying to style my schamncy new web page, I did two things, one clever and one not: </p>
-
-<ul>
-  <li><strong>Clever</strong>: I realized I didn’t want to write my own CSS sheets, because fuck that noise.</li>
-  <li><strong>Not-So-Much</strong>: I forgot about Twitter Bootstrap. </li>
-</ul>
-
-<p>I found the pleasing, if peculiar, <a href="www.getskeleton.com">Skeleton.css</a> – which is nice looking and open source and free, and rescales (reasonably) well on mobile. Only problem: the provided page template is in straight HTML, and I’m writing in Scalate’s implementation of Jade (itself a reduction of Scaml, which is Scala Haml. Oye.) So, I re-wrote the thing. Maybe this will help another person, ever? (Yeah, I think it’s a funny line too.)</p>
-
-<h3 id="the-gist">The Gist</h3>
-<div><script src="https://gist.github.com/6201942.js"></script>
-<noscript><pre><code /></pre></noscript></div>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[O HAI]]></title>
-    <link href="http://Gastove.github.io/blog/2013/08/11/o-hai/"/>
-    <updated>2013-08-11T10:39:00-07:00</updated>
-    <id>http://Gastove.github.io/blog/2013/08/11/o-hai</id>
-    <content type="html"><![CDATA[<p>Well, fascinating. I’ve got a blog again now. I haven’t had one of these in a bit; no time, no reason, really. I used to blog about food – but those days are not these days. Maybe I’ll write about food again?</p>
-
-<p>Anyways. This is mostly blather-based Lorem Ipsum. This blog needs some CSS, and quick; I want to make sure this thing looks good on the Mobiles and the Small Screens, so I needs some content. More soon.</p>
 ]]></content>
   </entry>
   
