@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Code | My Octopress Blog]]></title>
+  <title><![CDATA[Category: Code | Strangely Specific and Very Odd]]></title>
   <link href="http://Gastove.github.io/blog/categories/code/atom.xml" rel="self"/>
   <link href="http://Gastove.github.io/"/>
-  <updated>2013-08-11T11:01:36-07:00</updated>
+  <updated>2013-08-11T13:10:05-07:00</updated>
   <id>http://Gastove.github.io/</id>
   <author>
-    <name><![CDATA[Your Name]]></name>
+    <name><![CDATA[Ross M. Donaldson]]></name>
     
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
