@@ -4,7 +4,7 @@ title: "Thoughts on this Site So Far"
 date: "2013-08-11 16:58"
 comments: true
 categories: [Code, Thoughts]
-published: true
+published: false
 ---
 
 Huh. Okay. This... this kinda seems to be working. So far, this has been an interesting project. Over the last two days, I've spun up a personal web page and a blog, both from code (that is, not using WYSIWYG editors or 3rd Party stuff). I'm using what I can only describe as an Ecclectic Blend of tools -- something I have mixed feelings about. Lets do a little review, after the cut:
@@ -39,9 +39,7 @@ Beyond some CSS-hackery to get code aligned correctly, my only other real trick 
 						      	       	  print fizzbuzz
 {:lang="python"}
 
-Being the sort of doofus I am, I got Octopress working, then trotted out to find an emacs plugin to run it. Octopress is a framework that wraps the thorny-but-powerfull Jekyll blogging engine; it figures the emacs package would be [Hyde](https://github.com/nibrahim/Hyde). 
-
-I want to like Hyde. I really do. It does all these things I want done -- integrating the various `rake` commands into my text editor. But man... it just doesn't actually work quite right. If I can hack it into Working, I'll post about it here, but for now I'm Octopress-ing via the shell.
+Being the sort of doofus I am, I got Octopress working, then trotted out to find an emacs plugin to run it. Octopress is a framework that wraps the thorny-but-powerfull Jekyll blogging engine; it figures the emacs package would be [Hyde](https://github.com/nibrahim/Hyde). Beyond fussing with some of the `.el`s to update Hyde's new post boilerplate, I've found it to be just as easy to use as most of the rest of this stuff.
 
 #### In Conclusion
 

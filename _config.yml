@@ -35,10 +35,10 @@ code_dir: downloads/code
 category_dir: blog/categories
 markdown: kramdown
 kramdown:
-	use_coderay: true
-	coderay:
-		coderay_line_numbers: table
-		coderay_css: class
+  use_coderay: true
+  coderay:
+    coderay_line_numbers: table
+    coderay_css: class
 #rdiscount:
 #  extensions:
 #    - autolink
