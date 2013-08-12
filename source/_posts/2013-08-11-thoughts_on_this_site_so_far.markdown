@@ -29,14 +29,14 @@ I have fallen almost instantly in love with [Octopress](http://octopress.org/), 
 
 Beyond some CSS-hackery to get code aligned correctly, my only other real trick was setting up syntax highlighting. (Octopress comes with Solar built-in, but I'm not, uh, a fan of Solar.) Thanks to some [very good directions](http://blog.alestanis.com/2013/02/04/octopress-and-the-twilight-color-scheme/), getting Twilight going didn't take long at all. And now, I get code blocks like this:
 
-       def fizzbuzz:
-       	   for x in range(0, 101):
-	       	 fizzbuzz = ""
-		 	    if x % 3 == 0:
-			       	   fizzbuzz += "fizz"
-				   	       if x % 5 == 0:
-					       	      fuzzbuzz += "buzz"
-						      	       	  print fizzbuzz
+	def fizzbuzz:
+		for x in range(0, 101):
+			output = ""
+			if x % 3 == 0:
+				output += "fizz"
+			if x % 5 == 0:
+				output += "buzz"
+			print output
 {:lang="python"}
 
 Being the sort of doofus I am, I got Octopress working, then trotted out to find an emacs plugin to run it. Octopress is a framework that wraps the thorny-but-powerfull Jekyll blogging engine; it figures the emacs package would be [Hyde](https://github.com/nibrahim/Hyde). 
