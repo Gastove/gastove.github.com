@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Thoughts | Strangely Specific and Very Odd]]></title>
   <link href="http://Gastove.github.io/blog/categories/thoughts/atom.xml" rel="self"/>
   <link href="http://Gastove.github.io/"/>
-  <updated>2013-08-12T09:39:30-07:00</updated>
+  <updated>2013-08-12T09:54:15-07:00</updated>
   <id>http://Gastove.github.io/</id>
   <author>
     <name><![CDATA[Ross M. Donaldson]]></name>
@@ -50,14 +50,14 @@
 <a href="#n7" name="n7">7</a>
 <a href="#n8" name="n8">8</a>
 </pre></td>
-  <td class="code"><pre>   <span class="keyword">def</span> <span class="function">fizzbuzz</span>:
-          <span class="keyword">for</span> x <span class="keyword">in</span> <span class="predefined">range</span>(<span class="integer">0</span>, <span class="integer">101</span>):
-            fizzbuzz = <span class="string"><span class="delimiter">&quot;</span><span class="delimiter">&quot;</span></span>
-     <span class="keyword">if</span> x % <span class="integer">3</span> == <span class="integer">0</span>:
-                fizzbuzz += <span class="string"><span class="delimiter">&quot;</span><span class="content">fizz</span><span class="delimiter">&quot;</span></span>
-            <span class="keyword">if</span> x % <span class="integer">5</span> == <span class="integer">0</span>:
-                fuzzbuzz += <span class="string"><span class="delimiter">&quot;</span><span class="content">buzz</span><span class="delimiter">&quot;</span></span>
-                  <span class="keyword">print</span> fizzbuzz
+  <td class="code"><pre><span class="keyword">def</span> <span class="function">fizzbuzz</span>:
+    <span class="keyword">for</span> x <span class="keyword">in</span> <span class="predefined">range</span>(<span class="integer">0</span>, <span class="integer">101</span>):
+    output = <span class="string"><span class="delimiter">&quot;</span><span class="delimiter">&quot;</span></span>
+    <span class="keyword">if</span> x % <span class="integer">3</span> == <span class="integer">0</span>:
+        output += <span class="string"><span class="delimiter">&quot;</span><span class="content">fizz</span><span class="delimiter">&quot;</span></span>
+    <span class="keyword">if</span> x % <span class="integer">5</span> == <span class="integer">0</span>:
+        output += <span class="string"><span class="delimiter">&quot;</span><span class="content">buzz</span><span class="delimiter">&quot;</span></span>
+    <span class="keyword">print</span> output
 </pre></td>
 </tr></table>
 </div>
