@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Setting up Emacs Prelude for Multiple SQL Databases and Query Development - Strangely Specific and Very Odd</title>
+  <meta name="author" content="Ross M. Donaldson">
+
+  
+  <meta name="description" content="Ah, emacs. What can’t you do? …actually, that’s the problem. Emacs, for all its splendor, can be an infinite rabbit hole of customization, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://Gastove.github.io/blog/2013/08/26/emacs-for-sql">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Strangely Specific and Very Odd" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Strangely Specific and Very Odd</a></h1>
+  
+    <h2>The (Sometimes) Professional Blog of Ross M. Donaldson</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:Gastove.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="http://www.gastove.com/">Home</a></li>
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Setting Up Emacs Prelude for Multiple SQL Databases and Query Development</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-26T20:47:00-07:00" pubdate data-updated="true">Aug 26<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ah, emacs. What can’t you do?</p>
+
+<p>…actually, that’s the problem. Emacs, for all its splendor, can be an infinite rabbit hole of customization, modification, tweaking, scripting, and parens. I recently discovered <a href="www.github.com/bbatsov/prelude">Emacs Prelude</a>, and I recommend it heartily. It does, for the most part, what it says on the tin: “The final product offers an easy to use Emacs configuration for Emacs newcomers and lots of additional power for Emacs power users.” Check and check.</p>
+
+<p>That still leaves some customization to be done, and a particularly common use case in my work is SQL query development, often in the context of embedded SQL within an automated reporting framework. Developing queries with SQL GUIs like MySQL WorkBench and Sequel Pro is lovely… but I don’t always have access to them, and copy-pasting queries from one editor to another is a lovely way to introduce bizarre characters into an otherwise pristine query. (And who doesn’t love debugging those!) A better answer would be to manipulate embedded SQL in-place – in this case, from within Emacs. Fortunately, this isn’t hard.</p>
+
+<!--more-->
+
+<p>Emacs has a set of built-in protocols, accessible via <code>sql-*</code> (e.g., <code>sql-mysql</code>). They work beautifully, allowing a parallel SQL ‘interactive’ (or ‘SQLi’) buffer that’s effectively an augmented SQL CLI. The augmentation allows you to ship SQL from the buffer you’re editing in to the SQLi buffer for evaluation using one of three basic approaches:</p>
+
+<ul>
+  <li><code>sql-send-buffer</code> – fine for one-off query development but otherwise a little too broad</li>
+  <li><code>sql-send-paragraph</code> – better; tries to auto-detect a delimited unit of SQL, but doesn’t always work</li>
+  <li><code>sql-send-region</code> – ideal. Ship an arbitrary region in to the SQLi buffer</li>
+</ul>
+
+<p>The last issue to tackle, then, is this: <code>sql-*</code> mode can’t autoload your local DB configs. Hooray! If you have a <code>my.conf</code> you’re particularly proud of, it wont avail you here - instead, a command like <code>sql-mysql</code> will leave you entering in your credentials over and over again. There are some <a href="http://stackoverflow.com/questions/5734965/how-can-i-get-emacs-sql-mode-to-use-the-mysql-config-file-my-cnf">very good</a> StackOverflow posts about getting around, this, but they all miss two points: I really don’t want to have to store my DB credentials in plain text; I have to connect to like twelve different databases.</p>
+
+<p>My solution (written up in my Prelude <code>custom.el</code>) looks like so:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="k">setq</span> <span class="nv">sql-connection-alist</span>
+</span><span class="line">      <span class="o">&#39;</span><span class="p">((</span><span class="nv">db01</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-product</span> <span class="ss">&#39;mysql</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-server</span> <span class="nv">my-server-name</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-user</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_USER&quot;</span><span class="p">))</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-password</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_PASSWORD&quot;</span><span class="p">))</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-database</span> <span class="s">&quot;wordace&quot;</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-port</span> <span class="mi">3306</span><span class="p">))</span>
+</span><span class="line">        <span class="p">(</span><span class="nv">db02</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-product</span> <span class="ss">&#39;mysql</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-server</span> <span class="nv">my-other-server-name</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-user</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_USER&quot;</span><span class="p">))</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-password</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_PASSWORD&quot;</span><span class="p">))</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-database</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="nv">sql-port</span> <span class="mi">3306</span><span class="p">))))</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">sql-connect-preset</span> <span class="p">(</span><span class="nv">name</span><span class="p">)</span>
+</span><span class="line">  <span class="s">&quot;Connect to a predefined SQL connection listed in `sql-connection-alist&#39;&quot;</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">eval</span> <span class="o">`</span><span class="p">(</span><span class="k">let</span> <span class="o">,</span><span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nb">assoc</span> <span class="nv">name</span> <span class="nv">sql-connection-alist</span><span class="p">))</span>
+</span><span class="line">    <span class="p">(</span><span class="k">flet</span> <span class="p">((</span><span class="nv">sql-get-login</span> <span class="p">(</span><span class="k">&amp;rest</span> <span class="nv">what</span><span class="p">)))</span>
+</span><span class="line">      <span class="p">(</span><span class="nv">sql-product-interactive</span> <span class="nv">sql-product</span><span class="p">)))))</span>
+</span><span class="line">
+</span><span class="line"><span class="c1">;; Function to load a DB based on its short name</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">sql-connect-preset-by-name</span> <span class="p">(</span><span class="nv">name</span><span class="p">)</span>
+</span><span class="line">  <span class="s">&quot;Connect to a DB by entering it&#39;s short name&quot;</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">interactive</span> <span class="s">&quot;sDB Name: &quot;</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">sql-connect-preset</span> <span class="ss">&#39;name</span><span class="p">))</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">&quot;M-s q&quot;</span><span class="p">)</span> <span class="ss">&#39;sql-connect-preset-by-name</span><span class="p">)</span> <span class="c1">; Connect to a db preset by name</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>This pleases the hell out of me. Hitting <code>M-s q</code> prompts me for a server short-name (in this example, ‘db01’ or ‘db02’), and loads my credentials out of environment variables where they’re safe and sound. Win!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Ross M. Donaldson</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-26T20:47:00-07:00" pubdate data-updated="true">Aug 26<span>th</span>, 2013</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://Gastove.github.io/blog/2013/08/26/emacs-for-sql/" data-via="" data-counturl="http://Gastove.github.io/blog/2013/08/26/emacs-for-sql/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2013/08/11/thoughts_on_this_site_so_far/" title="Previous Post: Thoughts on this Site So Far">&laquo; Thoughts on this Site So Far</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/08/26/emacs-for-sql/">Setting up Emacs Prelude for Multiple SQL Databases and Query Development</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/11/thoughts_on_this_site_so_far/">Thoughts on this Site So Far</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/11/correcting-text-alignment-for-gists-in-octopress-themes/">Correcting Text Alignment for Gists in Octopress Themes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/11/pure-show-and-tell-my-first-gist/">Pure Show-And-Tell: My First Gist</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/11/o-hai/">O HAI</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - Ross M. Donaldson -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
