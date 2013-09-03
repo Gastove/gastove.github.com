@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Web | Strangely Specific and Very Odd]]></title>
-  <link href="http://Gastove.github.io/blog/categories/web/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Scalatra, | Strangely Specific and Very Odd]]></title>
+  <link href="http://Gastove.github.io/blog/categories/scalatra/atom.xml" rel="self"/>
   <link href="http://Gastove.github.io/"/>
   <updated>2013-09-03T09:51:23-07:00</updated>
   <id>http://Gastove.github.io/</id>
@@ -49,69 +49,6 @@ libraryDependencies += "org.fusesource.scalamd" %% "scalamd" % "1.6"
 <p>BOOM. Works like a charm. And it’s an easy fix! I just wish <em>somebody</em>, anybody at either Scalatra or Scalate HQ would mention the damn dependency! (I’ve poked at them via Twitter, but while both projects are under active development, the Twitter feeds… aren’t, alas.)</p>
 
 <p>In any case, I hope this saves people some time. Onwards, to better styled, DRYer, lovelier web apps!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Correcting Text Alignment for Gists in Octopress Themes]]></title>
-    <link href="http://Gastove.github.io/blog/2013/08/11/correcting-text-alignment-for-gists-in-octopress-themes/"/>
-    <updated>2013-08-11T15:19:00-07:00</updated>
-    <id>http://Gastove.github.io/blog/2013/08/11/correcting-text-alignment-for-gists-in-octopress-themes</id>
-    <content type="html"><![CDATA[<p>So I’m setting up my hella sweet Octopress blog and I’m feeling pretty sharp and I decide it’s time for a theme. What could be better! Gussy the place up a bit. There are <a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes">bunches of themes</a> available, so that bit was pretty simple. Installation: boom! Previews: bam! All exactly as easy as advertised. </p>
-
-<p>To celebrate, I decide to publish my first github gist. </p>
-
-<p>And all the text aligns center.</p>
-
-<p>…</p>
-
-<p>Okay so I have no idea why anybody would ever, ever do that, but the answer seems to go like so: there’s an SCSS template in <code>sass/parts</code> called <code>_article.scss</code>. It contains a CSS entry, so (many things removed for brevity):</p>
-
-<div><table class="CodeRay"><tr>
-  <td class="line-numbers" title="double click to toggle" ondblclick="with (this.firstChild.style) { display = (display == '') ? 'none' : '' }"><pre><a href="#n1" name="n1">1</a>
-<a href="#n2" name="n2">2</a>
-<a href="#n3" name="n3">3</a>
-<a href="#n4" name="n4">4</a>
-<a href="#n5" name="n5">5</a>
-<a href="#n6" name="n6">6</a>
-<a href="#n7" name="n7">7</a>
-<a href="#n8" name="n8">8</a>
-<a href="#n9" name="n9">9</a>
-<strong><a href="#n10" name="n10">10</a></strong>
-<a href="#n11" name="n11">11</a>
-<a href="#n12" name="n12">12</a>
-<a href="#n13" name="n13">13</a>
-<a href="#n14" name="n14">14</a>
-<a href="#n15" name="n15">15</a>
-<a href="#n16" name="n16">16</a>
-<a href="#n17" name="n17">17</a>
-</pre></td>
-  <td class="code"><pre> article{
-    .entry-content{
-        table{
-            background: $color-gray04;
-            border: 1px solid $color-gray03;
-            border-spacing: 0;
-            margin-top: 10px;
-            th{
-                background: $color-gray03;
-                padding: 0 15px;
-            }
-            td{
-                text-align: center;
-            }
-        }
-    }
-}
-</pre></td>
-</tr></table>
-</div>
-
-<p>That little td definition is the one that gets you, and here’s a thing that threw me off for a bit: this same file exists (almost identically) inside <code>.themes/[Your Theme Name]/sass/parts/</code> – and changing the theme-specific file does <em>not</em> override the stuff in <code>[Blog]/sass/parts</code>. Only tweaking the top-level definiton put my gist back over to the left. </p>
-
-<p>I’m pretty much a CSS n00b, so it’s entirely likely there’s something derpy I’m doing/not getting with this. If any Octopress ninjas out in Blogland have a clearer idea of what’s going on than I do, <em>please</em>… oh wait. This theme doesn’t support comments. </p>
-
-<p>Tweet at me. That’s it. <a href="http://www.twitter.com/Gastove">With this handy link</a></p>
 ]]></content>
   </entry>
   
