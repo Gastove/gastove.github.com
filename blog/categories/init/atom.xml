@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Init | Strangely Specific and Very Odd]]></title>
+  <link href="http://Gastove.github.io/blog/categories/init/atom.xml" rel="self"/>
+  <link href="http://Gastove.github.io/"/>
+  <updated>2013-09-03T09:51:23-07:00</updated>
+  <id>http://Gastove.github.io/</id>
+  <author>
+    <name><![CDATA[Ross M. Donaldson]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[O HAI]]></title>
+    <link href="http://Gastove.github.io/blog/2013/08/11/o-hai/"/>
+    <updated>2013-08-11T10:39:00-07:00</updated>
+    <id>http://Gastove.github.io/blog/2013/08/11/o-hai</id>
+    <content type="html"><![CDATA[<p>Well, fascinating. I’ve got a blog again now. I haven’t had one of these in a bit; no time, no reason, really. I used to blog about food – but those days are not these days. Maybe I’ll write about food again?</p>
+
+<p>Anyways. This is mostly blather-based Lorem Ipsum. This blog needs some CSS, and quick; I want to make sure this thing looks good on the Mobiles and the Small Screens, so I needs some content. More soon.</p>
+]]></content>
+  </entry>
+  
+</feed>

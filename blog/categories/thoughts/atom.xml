@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Thoughts | Strangely Specific and Very Odd]]></title>
+  <link href="http://Gastove.github.io/blog/categories/thoughts/atom.xml" rel="self"/>
+  <link href="http://Gastove.github.io/"/>
+  <updated>2013-09-03T09:51:23-07:00</updated>
+  <id>http://Gastove.github.io/</id>
+  <author>
+    <name><![CDATA[Ross M. Donaldson]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Thoughts on this Site So Far]]></title>
+    <link href="http://Gastove.github.io/blog/2013/08/11/thoughts_on_this_site_so_far/"/>
+    <updated>2013-08-11T16:58:00-07:00</updated>
+    <id>http://Gastove.github.io/blog/2013/08/11/thoughts_on_this_site_so_far</id>
+    <content type="html"><![CDATA[<p>Huh. Okay. This… this kinda seems to be working. So far, this has been an interesting project. Over the last two days, I’ve spun up a personal web page and a blog, both from code (that is, not using WYSIWYG editors or 3rd Party stuff). I’m using what I can only describe as an Ecclectic Blend of tools – something I have mixed feelings about. Lets do a little review, after the cut:</p>
+
+<!--more-->
+
+<h4 id="scalatra">Scalatra</h4>
+
+<p>My main site is written in Scala, hosted on Heroku. In all, hosting has been one of the easiest parts; Heroku has some special configuration requirements, but  provides very good, accurate docs, and setup is mostly a breeze. There are, it turns out, several web frameworks for Scala – most notably <a href="http://liftweb.net/">Lift</a>, <a href="http://www.playframework.com/">Play</a>, and <a href="www.scalatra.org">Scalatra</a>. I’ve gone with the last of these; so far, it’s been easy as can be. Scalatra is intuitive, plays well with Heroku, and is even decently well documented. HTML Templating is handled with Scalate.</p>
+
+<p>Ah. Scalate.</p>
+
+<p>Scalate is the main game in town for Scala HTML templates, as near as I can tell. On the up side, it’s powerful and fast and pretty robust. It supports more templating choices than I’d actually care to make, and that might be the down side. For mostly arbitrary reasons, I got going with Jade – which is a terse form of Scaml, which in turn is Scala Haml. </p>
+
+<p>Perhaps you’ve already intuited the problem. There are a bunch of templating choices, and I picked the one that’s the most abstreuse, the least interoperable, and the hardest to find support for. Scalatra doesn’t <em>actually</em> support all of Jade (<em>cough</em> inheritance), so finding clear help for Scalatra Jade vs. Jade Itsownself is kind of a mess. </p>
+
+<p>All that said: Jade is both easy and fast to write, <em>very</em> DRY, and about as powerful as you could want. I’ve made my bed, and now I’ll lay in it – and I don’t think that’s too bad.</p>
+
+<h4 id="octopress">Octopress</h4>
+
+<p>I have fallen almost instantly in love with <a href="http://octopress.org/">Octopress</a>, a blogging framework that defaults to publishing on Github Pages (as it should be). So far it has been an absolute pleasure to use, though I cannot say the same for most of the themes I’ve tried. Now: fussing and whining about themes is maybe a dodgy proposition for a guy who couldn’t write one to save himself from sharks. But then, that’s why I went hunting for third party Octopress themes in the first place. There are <a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes">a lot of them</a>. They feature truly beautiful page stylings and truly peculiar CSS choices – like defaulting to centering the text inside a code block. That’s right. Centered. Code. </p>
+
+<p>Beyond some CSS-hackery to get code aligned correctly, my only other real trick was setting up syntax highlighting. (Octopress comes with Solar built-in, but I’m not, uh, a fan of Solar.) Thanks to some <a href="http://blog.alestanis.com/2013/02/04/octopress-and-the-twilight-color-scheme/">very good directions</a>, getting Twilight going didn’t take long at all. And now, I get code blocks like this:</p>
+
+<div><table class="CodeRay"><tr>
+  <td class="line-numbers" title="double click to toggle" ondblclick="with (this.firstChild.style) { display = (display == '') ? 'none' : '' }"><pre><a href="#n1" name="n1">1</a>
+<a href="#n2" name="n2">2</a>
+<a href="#n3" name="n3">3</a>
+<a href="#n4" name="n4">4</a>
+<a href="#n5" name="n5">5</a>
+<a href="#n6" name="n6">6</a>
+<a href="#n7" name="n7">7</a>
+<a href="#n8" name="n8">8</a>
+</pre></td>
+  <td class="code"><pre><span class="keyword">def</span> <span class="function">fizzbuzz</span>:
+    <span class="keyword">for</span> x <span class="keyword">in</span> <span class="predefined">range</span>(<span class="integer">0</span>, <span class="integer">101</span>):
+        output = <span class="string"><span class="delimiter">&quot;</span><span class="delimiter">&quot;</span></span>
+        <span class="keyword">if</span> x % <span class="integer">3</span> == <span class="integer">0</span>:
+            output += <span class="string"><span class="delimiter">&quot;</span><span class="content">fizz</span><span class="delimiter">&quot;</span></span>
+        <span class="keyword">if</span> x % <span class="integer">5</span> == <span class="integer">0</span>:
+            output += <span class="string"><span class="delimiter">&quot;</span><span class="content">buzz</span><span class="delimiter">&quot;</span></span>
+        <span class="keyword">print</span> output
+</pre></td>
+</tr></table>
+</div>
+
+<p>Being the sort of doofus I am, I got Octopress working, then trotted out to find an emacs plugin to run it. Octopress is a framework that wraps the thorny-but-powerfull Jekyll blogging engine; it figures the emacs package would be <a href="https://github.com/nibrahim/Hyde">Hyde</a>. </p>
+
+<p>I want to like Hyde. I really do. It does all these things I want done – integrating the various <code>rake</code> commands into my text editor. But man… it just doesn’t actually work quite right. If I can hack it into Working, I’ll post about it here, but for now I’m Octopress-ing via the shell.</p>
+
+<h4 id="in-conclusion">In Conclusion</h4>
+
+<p>The web is a lovely place, with a remarkable number of very cool pieces that don’t take long to pull together. It takes a little time, sure, and some command line know-how – but I know have a web presence that makes me smile. </p>
+]]></content>
+  </entry>
+  
+</feed>
