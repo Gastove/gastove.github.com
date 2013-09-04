@@ -1,0 +1,40 @@
+---
+layout: post
+title: "Scalatra, Scalate, Jade, and Markdown: Together at Last"
+date: 2013-09-03 09:10
+comments: true
+published: true
+categories: Scalatra, Web Development, Glitches, Solutions
+---
+
+So I'm awfully fond of Scala, so when I got going building web apps, [Scalatra](www.scalatra.org) seemed like an excellent choice. (I'm natively wary of things like Rails, and the Play! framework seemed more-or-less of Rails' ilk.) Scalatra supports templating via [Scalate](http://scalate.fusesource.org), which is as charming as it is flexible -- that is, very. As part of that flexibility, Scalate supports more templating languages than I really need. I like the terse, Haml-based [Jade](http://jade-lang.com/) myself -- particularly because it supports [markdown](http://daringfireball.net/projects/markdown/syntax), meaning your templates can be lovely, dry things.
+
+<!-- more -->
+
+For instance:
+
+``` jade
+.foo
+  :markdown
+    This will make a paragraph inside a 'foo' element from your CSS, close it correctly, and finish with a properly tagged [hyperlink](www.foo.bar).
+```
+
+Lovely! Only one problem: it was broken out of the box. Any inclusion of the `:markdown` filter caused the compiler to throw a `java.lang.NoSuchMethodError` exception. Fan. Tastic.
+
+So I started hacking, and tried a bunch of things that failed -- including, ironically, the correct answer implemented slightly incorrectly. I owe my eventual success to [Stack Overflow](http://stackoverflow.com/questions/18345085/java-lang-nosuchmethoderror-in-scalatra-using-scalate-with-markdown). What I suspected turned out to be correct, and goes a little like this:
+
+Scalatra comes pre-packed with its own version of Scalate; Scalate comes pre-packaged with its own version of Jade. The problem is, neither Scalatra nor Scalate ever mention that what isn't baked in _anywhere_ is Scalate's markdown support, which lives in [Maven](http://maven.apache.com). I got an inkling of this, and tried:
+
+``` scala build.sbt
+libraryDependencies += "org.fusesource.scalamd" % "scalamd" % "1.5"
+```
+
+There are two errors here; the most problematic is the number 5. `scalamd 1.5` is built against Scala 2.8. For my own version, Scala 2.10.0, you need version 1.6, plus an extra % for correct lookup formatting, so:
+
+```scala build.sbt
+libraryDependencies += "org.fusesource.scalamd" %% "scalamd" % "1.6"
+```
+
+BOOM. Works like a charm. And it's an easy fix! I just wish *somebody*, anybody at either Scalatra or Scalate HQ would mention the damn dependency! (I've poked at them via Twitter, but while both projects are under active development, the Twitter feeds... aren't, alas.)
+
+In any case, I hope this saves people some time. Onwards, to better styled, DRYer, lovelier web apps!
