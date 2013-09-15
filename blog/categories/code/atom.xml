@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Code | Strangely Specific and Very Odd]]></title>
   <link href="http://Gastove.github.io/blog/categories/code/atom.xml" rel="self"/>
   <link href="http://Gastove.github.io/"/>
-  <updated>2013-09-03T17:45:40-07:00</updated>
+  <updated>2013-09-15T08:48:47-07:00</updated>
   <id>http://Gastove.github.io/</id>
   <author>
     <name><![CDATA[Ross M. Donaldson]]></name>
@@ -154,9 +154,7 @@
 <p>I found the pleasing, if peculiar, <a href="www.getskeleton.com">Skeleton.css</a> – which is nice looking and open source and free, and rescales (reasonably) well on mobile. Only problem: the provided page template is in straight HTML, and I’m writing in Scalate’s implementation of Jade (itself a reduction of Scaml, which is Scala Haml. Oye.) So, I re-wrote the thing. Maybe this will help another person, ever? (Yeah, I think it’s a funny line too.)</p>
 
 <h3 id="the-gist">The Gist</h3>
-<p><div><script src='https://gist.github.com/6201942.js'></script>
-<noscript><pre><code></code></pre></noscript></div>
-</p>
+<p>{% gist 6201942 %}</p>
 
 ]]></content>
   </entry>
