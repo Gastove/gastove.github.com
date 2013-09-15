@@ -3,7 +3,7 @@ layout: post
 title: "Bloody Syntax: Standardizing on data.table in R"
 date: 2013-09-14 11:54
 comments: true
-categories:
+categories: rstats, data science
 ---
 
 The amount of data in my work, like so many things, creeps. I show a chart of five things, people ask for the other six. I show two weeks of history, I'm asked for four more. I instrument a feature and then it's deployed on six new platforms and how's it performing, for all 11 things, with six weeks of history?
