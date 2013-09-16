@@ -68,7 +68,7 @@ def _write_default_metadata(post_real_name, post_full_path):
     ]
     metadata_defaults = {
         "Title": post_real_name,
-        "Date": strftime("%Y-%m-%d", localtime()),
+        "Date": strftime("%Y-%m-%d %H:%M", localtime()),
         "Category": "",
         "Tags": "",
         "Slug": os.path.basename(post_full_path[:-3]),

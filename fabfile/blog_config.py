@@ -34,7 +34,7 @@ OUTPUT_PATH = '../output'
 
 # Blogroll
 LINKS =  (('Home', 'http://www.gastove.com'),
-          ('Food', 'http://blog.gastove.com/'),
+          ('Food', 'http://food.gastove.com/'),
 #          ('Pelican', 'http://getpelican.com/'),
 )
 

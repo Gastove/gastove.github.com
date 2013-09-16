@@ -14,8 +14,7 @@ eggs
 parts
 bin
 var
-lib/
-!lib/theme
+lib/python2.7/
 bin/
 local/
 
