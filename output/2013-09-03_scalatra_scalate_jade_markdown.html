@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Strangely Specific and Very Odd</title>
+    <meta name="description" content="">
+    <meta name="author" content="Ross Donaldson">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+    <script src="./theme/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap.no-icons.min.css" rel="stylesheet">
+    <link href="./theme/local.css" rel="stylesheet">
+    <link href="./theme/pygments.css" rel="stylesheet">
+    <link href="./theme/font-awesome.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Gudea:400,400italic|Alegreya+SC' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+<header class="blog-header">
+  <div class="container">
+    <div class="row-fluid">
+      <div class="span9">
+	<a href="." class="brand">Strangely Specific and Very Odd</a>
+      </div>
+
+      <div class="span3" id="blog-nav">
+	<ul class="nav nav-pills pull-right">
+	                        	   	    <li  class="active" >
+	      <a href="./category/code.html ">Code</a>
+	   	    <li >
+	      <a href="./category/data-science.html ">Data Science</a>
+	   	</ul>
+      </div>
+    </div> <!-- End of fluid row-->
+  </div>   <!-- End of Container-->
+</header>
+    
+<div class="container">
+    <div class="content">
+    <div class="row-fluid">
+
+        <div class="span10">
+            <div class='article'>
+      <div class="row-fluid">
+           <div class="content-title span9">
+             <h1>Scalatra, Scalate, Jade, and Markdown: Together at Last</h1b>
+           </div>
+      </div>
+    <div class="row-fluid">
+      <div class="span2">
+	<p>Tue, Sep 03 2013 </p>
+
+<p style="text-align: left;">
+Filed under <a href="./category/code.html">Code</a>
+</p>
+<p style="text-align: left;">
+ 
+    Tags <a href="./tag/tools.html">Tools</a> <a href="./tag/webapp.html">Webapp</a> <a href="./tag/scalatra.html">Scalatra</a> <a href="./tag/scalate.html">Scalate</a> <a href="./tag/jade.html">Jade</a> <a href="./tag/scala.html">Scala</a> <a href="./tag/markdown.html">Markdown</a> </p>
+<p>
+<a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gastove">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+</p>
+      </div>
+      
+      <div class="span8">
+	<p>So I'm awfully fond of Scala, so when I got going building web apps, <a href="www.scalatra.org">Scalatra</a> seemed like an excellent choice. (I'm natively wary of things like Rails, and the Play! framework seemed more-or-less of Rails' ilk.) Scalatra supports templating via <a href="http://scalate.fusesource.org">Scalate</a>, which is as charming as it is flexible -- that is, very. As part of that flexibility, Scalate supports more templating languages than I really need. I like the terse, Haml-based <a href="http://jade-lang.com/">Jade</a> myself -- particularly because it supports <a href="http://daringfireball.net/projects/markdown/syntax">markdown</a>, meaning your templates can be lovely, dry things.</p>
+<p>For instance:</p>
+<div class="highlight"><pre><span class="nc">.foo</span>
+  <span class="nd">:markdown</span>
+    <span class="nd">This will make a paragraph inside a &#39;foo&#39; element from your CSS, close it correctly, and finish with a properly tagged [hyperlink](www.foo.bar).</span>
+</pre></div>
+
+
+<p>Lovely! Only one problem: it was broken out of the box. Any inclusion of the <code>:markdown</code> filter caused the compiler to throw a <code>java.lang.NoSuchMethodError</code> exception. Fan. Tastic.</p>
+<p>So I started hacking, and tried a bunch of things that failed -- including, ironically, the correct answer implemented slightly incorrectly. I owe my eventual success to <a href="http://stackoverflow.com/questions/18345085/java-lang-nosuchmethoderror-in-scalatra-using-scalate-with-markdown">Stack Overflow</a>. What I suspected turned out to be correct, and goes a little like this:</p>
+<p>Scalatra comes pre-packed with its own version of Scalate; Scalate comes pre-packaged with its own version of Jade. The problem is, neither Scalatra nor Scalate ever mention that what isn't baked in <em>anywhere</em> is Scalate's markdown support, which lives in <a href="http://maven.apache.com">Maven</a>. I got an inkling of this, and tried:</p>
+<div class="highlight"><pre><span class="c1">// build.sbt -- wrong!</span>
+<span class="n">libraryDependencies</span> <span class="o">+=</span> <span class="s">&quot;org.fusesource.scalamd&quot;</span> <span class="o">%</span> <span class="s">&quot;scalamd&quot;</span> <span class="o">%</span> <span class="s">&quot;1.5&quot;</span>
+</pre></div>
+
+
+<p>There are two errors here; the most problematic is the number 5. <code>scalamd 1.5</code> is built against Scala 2.8. For my own version, Scala 2.10.0, you need version 1.6, plus an extra % for correct lookup formatting, so:</p>
+<div class="highlight"><pre><span class="c1">// build.sbt -- right!</span>
+<span class="n">libraryDependencies</span> <span class="o">+=</span> <span class="s">&quot;org.fusesource.scalamd&quot;</span> <span class="o">%%</span> <span class="s">&quot;scalamd&quot;</span> <span class="o">%</span> <span class="s">&quot;1.6&quot;</span>
+</pre></div>
+
+
+<p>BOOM. Works like a charm. And it's an easy fix! I just wish <em>somebody</em>, anybody at either Scalatra or Scalate HQ would mention the damn dependency! (I've poked at them via Twitter, but while both projects are under active development, the Twitter feeds... aren't, alas.)</p>
+<p>In any case, I hope this saves people some time. Onwards, to better styled, DRYer, lovelier web apps!</p>
+	<hr />
+      </div>
+    </div>
+    <div class="span10">
+      <h3>Comments</h3>
+    
+        </div>  
+    </div>
+        </div>
+        
+        
+    </div>     </div> </div>
+
+<!--footer-->
+<div class="container">
+  <div class="well" style="background-color: #E9EFF6">
+    <div id="blog-footer">
+      <div class="row-fluid">
+		<div class="social span2" align="center" id="socialist">
+	  <ul class="nav nav-list">
+	    <li class="nav-header">
+	      Social
+	    </li>
+	    	    <li><a href="http://www.twitter.com/Gastove"><i class="icon-twitter" style="color: #1f334b"></i>twitter</a></li>
+	    	    <li><a href="http://www.github.com/Gastove"><i class="icon-github" style="color: #1f334b"></i>github</a></li>
+	                
+	  </ul>
+	</div>
+		                <div class="links span2" align="center">
+          <ul class="nav nav-list">
+            <li class="nav-header"> 
+              Links
+            </li>
+            
+                        <li><a href="http://www.gastove.com">Home</a></li>
+                        <li><a href="http://getpelican.com/">Pelican</a></li>
+                        <li><a href="http://blog.gastove.com/">Professional Blog</a></li>
+                      </ul>
+        </div>
+        	<div class="site-nav span2" align="center">
+          <ul class="nav nav-list" id="site-links">
+            <li class="nav-header"> 
+              Site
+            </li>
+            <li><a href="."><i class="icon-home" style="color: #1f334b">
+                </i>Home</a></li>
+            <li><a href="./archives.html"><i class="icon-list" style="color: #1f334b">
+                </i>Archives</a></li>
+	    <li><a href="./tags.html"><i class="icon-tags" style="color: #1f334b">
+                </i>Tags</a></li>
+	    
+	                <li><a href="./" rel="alternate">
+                <i class="icon-rss-sign" style="color: #1f334b"></i>
+                Atom Feed</a></li>
+	  </ul>
+
+        </div>
+
+      </div> <!--end of fluid row-->
+    </div> <!--end of blog-footer-->
+    <hr />
+    <p align="center"><a href=".">Strangely Specific and Very Odd</a>
+      &copy; Ross Donaldson
+    Powered by <a href="github.com/getpelican/pelican">Pelican</a> and
+        <a href="https://twitter.github.com/bootstrap">Twitter Bootstrap</a>. 
+        Icons by <a href="http://fortawesome.github.com/Font-Awesome">Font Awesome</a> and 
+        <a href="http://gregoryloucas.github.com/Font-Awesome-More">Font Awesome More</a></p>
+
+  </div> <!--end of well -->
+</div> <!--end of container -->
+
+<!--/footer-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+
+
+
+</body>
+</html>

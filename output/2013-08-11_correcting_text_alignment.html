@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Strangely Specific and Very Odd</title>
+    <meta name="description" content="">
+    <meta name="author" content="Ross Donaldson">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+    <script src="./theme/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap.no-icons.min.css" rel="stylesheet">
+    <link href="./theme/local.css" rel="stylesheet">
+    <link href="./theme/pygments.css" rel="stylesheet">
+    <link href="./theme/font-awesome.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Gudea:400,400italic|Alegreya+SC' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+<header class="blog-header">
+  <div class="container">
+    <div class="row-fluid">
+      <div class="span9">
+	<a href="." class="brand">Strangely Specific and Very Odd</a>
+      </div>
+
+      <div class="span3" id="blog-nav">
+	<ul class="nav nav-pills pull-right">
+	                        	   	    <li  class="active" >
+	      <a href="./category/code.html ">Code</a>
+	   	    <li >
+	      <a href="./category/data-science.html ">Data Science</a>
+	   	</ul>
+      </div>
+    </div> <!-- End of fluid row-->
+  </div>   <!-- End of Container-->
+</header>
+    
+<div class="container">
+    <div class="content">
+    <div class="row-fluid">
+
+        <div class="span10">
+            <div class='article'>
+      <div class="row-fluid">
+           <div class="content-title span9">
+             <h1>Correcting Text Alignment for Gists in Octopress Themes</h1b>
+           </div>
+      </div>
+    <div class="row-fluid">
+      <div class="span2">
+	<p>Sun, Aug 11 2013 </p>
+
+<p style="text-align: left;">
+Filed under <a href="./category/code.html">Code</a>
+</p>
+<p style="text-align: left;">
+ 
+    Tags <a href="./tag/octopress.html">Octopress</a> <a href="./tag/tools.html">Tools</a> </p>
+<p>
+<a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gastove">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+</p>
+      </div>
+      
+      <div class="span8">
+	<p>So I'm setting up my hella sweet Octopress blog and I'm feeling pretty sharp and I decide it's time for a theme. What could be better! Gussy the place up a bit. There are <a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes">bunches of themes</a> available, so that bit was pretty simple. Installation: boom! Previews: bam! All exactly as easy as advertised.</p>
+<p>To celebrate, I decide to publish my first github gist.</p>
+<p>And all the text aligns center.</p>
+<p>...</p>
+<p>Okay so I have no idea why anybody would ever, ever do that, but the answer seems to go like so: there's an SCSS template in <code>sass/parts</code> called <code>_article.scss</code>. It contains a CSS entry, so (many things removed for brevity):</p>
+<div class="highlight"><pre><span class="nt">article</span><span class="p">{</span>
+    <span class="nc">.entry-content</span><span class="p">{</span>
+        <span class="nt">table</span><span class="p">{</span>
+            <span class="na">background</span><span class="o">:</span> <span class="nv">$color-gray04</span><span class="p">;</span>
+            <span class="na">border</span><span class="o">:</span> <span class="mi">1</span><span class="kt">px</span> <span class="no">solid</span> <span class="nv">$color-gray03</span><span class="p">;</span>
+            <span class="na">border-spacing</span><span class="o">:</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="na">margin-top</span><span class="o">:</span> <span class="mi">10</span><span class="kt">px</span><span class="p">;</span>
+            <span class="nt">th</span><span class="p">{</span>
+                <span class="na">background</span><span class="o">:</span> <span class="nv">$color-gray03</span><span class="p">;</span>
+                <span class="na">padding</span><span class="o">:</span> <span class="mi">0</span> <span class="mi">15</span><span class="kt">px</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="nt">td</span><span class="p">{</span>
+                <span class="na">text-align</span><span class="o">:</span> <span class="no">center</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>That little td definition is the one that gets you, and here's a thing that threw me off for a bit: this same file exists (almost identically) inside <code>.themes/[Your Theme Name]/sass/parts/</code> -- and changing the theme-specific file does <em>not</em> override the stuff in <code>[Blog]/sass/parts</code>. Only tweaking the top-level definiton put my gist back over to the left.</p>
+<p>I'm pretty much a CSS n00b, so it's entirely likely there's something derpy I'm doing/not getting with this. If any Octopress ninjas out in Blogland have a clearer idea of what's going on than I do, <em>please</em>... oh wait. This theme doesn't support comments.</p>
+<p>Tweet at me. That's it. <a href="http://www.twitter.com/Gastove">With this handy link</a></p>
+	<hr />
+      </div>
+    </div>
+    <div class="span10">
+      <h3>Comments</h3>
+    
+        </div>  
+    </div>
+        </div>
+        
+        
+    </div>     </div> </div>
+
+<!--footer-->
+<div class="container">
+  <div class="well" style="background-color: #E9EFF6">
+    <div id="blog-footer">
+      <div class="row-fluid">
+		<div class="social span2" align="center" id="socialist">
+	  <ul class="nav nav-list">
+	    <li class="nav-header">
+	      Social
+	    </li>
+	    	    <li><a href="http://www.twitter.com/Gastove"><i class="icon-twitter" style="color: #1f334b"></i>twitter</a></li>
+	    	    <li><a href="http://www.github.com/Gastove"><i class="icon-github" style="color: #1f334b"></i>github</a></li>
+	                
+	  </ul>
+	</div>
+		                <div class="links span2" align="center">
+          <ul class="nav nav-list">
+            <li class="nav-header"> 
+              Links
+            </li>
+            
+                        <li><a href="http://www.gastove.com">Home</a></li>
+                        <li><a href="http://getpelican.com/">Pelican</a></li>
+                        <li><a href="http://blog.gastove.com/">Professional Blog</a></li>
+                      </ul>
+        </div>
+        	<div class="site-nav span2" align="center">
+          <ul class="nav nav-list" id="site-links">
+            <li class="nav-header"> 
+              Site
+            </li>
+            <li><a href="."><i class="icon-home" style="color: #1f334b">
+                </i>Home</a></li>
+            <li><a href="./archives.html"><i class="icon-list" style="color: #1f334b">
+                </i>Archives</a></li>
+	    <li><a href="./tags.html"><i class="icon-tags" style="color: #1f334b">
+                </i>Tags</a></li>
+	    
+	                <li><a href="./" rel="alternate">
+                <i class="icon-rss-sign" style="color: #1f334b"></i>
+                Atom Feed</a></li>
+	  </ul>
+
+        </div>
+
+      </div> <!--end of fluid row-->
+    </div> <!--end of blog-footer-->
+    <hr />
+    <p align="center"><a href=".">Strangely Specific and Very Odd</a>
+      &copy; Ross Donaldson
+    Powered by <a href="github.com/getpelican/pelican">Pelican</a> and
+        <a href="https://twitter.github.com/bootstrap">Twitter Bootstrap</a>. 
+        Icons by <a href="http://fortawesome.github.com/Font-Awesome">Font Awesome</a> and 
+        <a href="http://gregoryloucas.github.com/Font-Awesome-More">Font Awesome More</a></p>
+
+  </div> <!--end of well -->
+</div> <!--end of container -->
+
+<!--/footer-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+
+
+
+</body>
+</html>

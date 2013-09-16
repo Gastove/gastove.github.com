@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Strangely Specific and Very Odd</title>
+    <meta name="description" content="">
+    <meta name="author" content="Ross Donaldson">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+    <script src="./theme/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap.no-icons.min.css" rel="stylesheet">
+    <link href="./theme/local.css" rel="stylesheet">
+    <link href="./theme/pygments.css" rel="stylesheet">
+    <link href="./theme/font-awesome.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Gudea:400,400italic|Alegreya+SC' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+<header class="blog-header">
+  <div class="container">
+    <div class="row-fluid">
+      <div class="span9">
+	<a href="." class="brand">Strangely Specific and Very Odd</a>
+      </div>
+
+      <div class="span3" id="blog-nav">
+	<ul class="nav nav-pills pull-right">
+	                        	   	    <li >
+	      <a href="./category/code.html ">Code</a>
+	   	    <li  class="active" >
+	      <a href="./category/data-science.html ">Data Science</a>
+	   	</ul>
+      </div>
+    </div> <!-- End of fluid row-->
+  </div>   <!-- End of Container-->
+</header>
+    
+<div class="container">
+    <div class="content">
+    <div class="row-fluid">
+
+        <div class="span10">
+            <div class='article'>
+      <div class="row-fluid">
+           <div class="content-title span9">
+             <h1>Setting up Emacs Prelude for Multiple SQL Databases and Query Development</h1b>
+           </div>
+      </div>
+    <div class="row-fluid">
+      <div class="span2">
+	<p>Mon, Aug 26 2013 </p>
+
+<p style="text-align: left;">
+Filed under <a href="./category/data-science.html">Data Science</a>
+</p>
+<p style="text-align: left;">
+ 
+    Tags <a href="./tag/tools.html">Tools</a> <a href="./tag/sql.html">SQL</a> <a href="./tag/emacs.html">emacs</a> <a href="./tag/gtd.html">GTD</a> </p>
+<p>
+<a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gastove">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+</p>
+      </div>
+      
+      <div class="span8">
+	<hr />
+<p>layout: post
+title: "Setting up Emacs Prelude for Multiple SQL Databases and Query Development"
+date: 2013-08-26 20:47
+comments: true
+published: true
+categories:</p>
+<hr />
+<p>Ah, emacs. What can't you do?</p>
+<p>...actually, that's the problem. Emacs, for all its splendor, can be an infinite rabbit hole of customization, modification, tweaking, scripting, and parens. I recently discovered <a href="www.github.com/bbatsov/prelude">Emacs Prelude</a>, and I recommend it heartily. It does, for the most part, what it says on the tin: "The final product offers an easy to use Emacs configuration for Emacs newcomers and lots of additional power for Emacs power users." Check and check.</p>
+<p>That still leaves some customization to be done, and a particularly common use case in my work is SQL query development, often in the context of embedded SQL within an automated reporting framework. Developing queries with SQL GUIs like MySQL WorkBench and Sequel Pro is lovely... but I don't always have access to them, and copy-pasting queries from one editor to another is a lovely way to introduce bizarre characters into an otherwise pristine query. (And who doesn't love debugging those!) A better answer would be to manipulate embedded SQL in-place -- in this case, from within Emacs. Fortunately, this isn't hard.</p>
+<!--more-->
+
+<p>Emacs has a set of built-in protocols, accessible via <code>sql-*</code> (e.g., <code>sql-mysql</code>). They work beautifully, allowing a parallel SQL 'interactive' (or 'SQLi') buffer that's effectively an augmented SQL CLI. The augmentation allows you to ship SQL from the buffer you're editing in to the SQLi buffer for evaluation using one of three basic approaches:</p>
+<ul>
+<li><code>sql-send-buffer</code> -- fine for one-off query development but otherwise a little too broad</li>
+<li><code>sql-send-paragraph</code> -- better; tries to auto-detect a delimited unit of SQL, but doesn't always work</li>
+<li><code>sql-send-region</code> -- ideal. Ship an arbitrary region in to the SQLi buffer</li>
+</ul>
+<p>The last issue to tackle, then, is this: <code>sql-*</code> mode can't autoload your local DB configs. Hooray! If you have a <code>my.conf</code> you're particularly proud of, it wont avail you here - instead, a command like <code>sql-mysql</code> will leave you entering in your credentials over and over again. There are some <a href="http://stackoverflow.com/questions/5734965/how-can-i-get-emacs-sql-mode-to-use-the-mysql-config-file-my-cnf">very good</a> StackOverflow posts about getting around, this, but they all miss two points: I really don't want to have to store my DB credentials in plain text; I have to connect to like twelve different databases.</p>
+<p>My solution (written up in my Prelude <code>custom.el</code>) looks like so:</p>
+<div class="highlight"><pre><span class="p">(</span><span class="k">setq</span> <span class="nv">sql-connection-alist</span>
+      <span class="o">&#39;</span><span class="p">((</span><span class="nv">db01</span>
+         <span class="p">(</span><span class="nv">sql-product</span> <span class="ss">&#39;mysql</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">sql-server</span> <span class="nv">my-server-name</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">sql-user</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_USER&quot;</span><span class="p">))</span>
+         <span class="p">(</span><span class="nv">sql-password</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_PASSWORD&quot;</span><span class="p">))</span>
+         <span class="p">(</span><span class="nv">sql-database</span> <span class="s">&quot;wordace&quot;</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">sql-port</span> <span class="mi">3306</span><span class="p">))</span>
+        <span class="p">(</span><span class="nv">db02</span>
+         <span class="p">(</span><span class="nv">sql-product</span> <span class="ss">&#39;mysql</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">sql-server</span> <span class="nv">my-other-server-name</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">sql-user</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_USER&quot;</span><span class="p">))</span>
+         <span class="p">(</span><span class="nv">sql-password</span> <span class="p">(</span><span class="nv">getenv</span> <span class="s">&quot;MYSQL_PASSWORD&quot;</span><span class="p">))</span>
+         <span class="p">(</span><span class="nv">sql-database</span> <span class="s">&quot;&quot;</span><span class="p">)</span>
+         <span class="p">(</span><span class="nv">sql-port</span> <span class="mi">3306</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">sql-connect-preset</span> <span class="p">(</span><span class="nv">name</span><span class="p">)</span>
+  <span class="s">&quot;Connect to a predefined SQL connection listed in `sql-connection-alist&#39;&quot;</span>
+  <span class="p">(</span><span class="nb">eval</span> <span class="o">`</span><span class="p">(</span><span class="k">let</span> <span class="o">,</span><span class="p">(</span><span class="nb">cdr</span> <span class="p">(</span><span class="nb">assoc</span> <span class="nv">name</span> <span class="nv">sql-connection-alist</span><span class="p">))</span>
+    <span class="p">(</span><span class="k">flet</span> <span class="p">((</span><span class="nv">sql-get-login</span> <span class="p">(</span><span class="k">&amp;rest</span> <span class="nv">what</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nv">sql-product-interactive</span> <span class="nv">sql-product</span><span class="p">)))))</span>
+
+<span class="c1">;; Function to load a DB based on its short name</span>
+<span class="p">(</span><span class="nb">defun</span> <span class="nv">sql-connect-preset-by-name</span> <span class="p">(</span><span class="nv">name</span><span class="p">)</span>
+  <span class="s">&quot;Connect to a DB by entering it&#39;s short name&quot;</span>
+  <span class="p">(</span><span class="nv">interactive</span> <span class="s">&quot;DB Name: &quot;</span><span class="p">)</span>
+  <span class="p">(</span><span class="nv">sql-connect-preset</span> <span class="ss">&#39;name</span><span class="p">))</span>
+
+<span class="p">(</span><span class="nv">global-set-key</span> <span class="p">(</span><span class="nv">kbd</span> <span class="s">&quot;M-s q&quot;</span><span class="p">)</span> <span class="ss">&#39;sql-connect-preset-by-name</span><span class="p">)</span> <span class="c1">; Connect to a db preset by name</span>
+</pre></div>
+
+
+<p>This pleases the hell out of me. Hitting <code>M-s q</code> prompts me for a server short-name (in this example, 'db01' or 'db02'), and loads my credentials out of environment variables where they're safe and sound. Win!</p>
+	<hr />
+      </div>
+    </div>
+    <div class="span10">
+      <h3>Comments</h3>
+    
+        </div>  
+    </div>
+        </div>
+        
+        
+    </div>     </div> </div>
+
+<!--footer-->
+<div class="container">
+  <div class="well" style="background-color: #E9EFF6">
+    <div id="blog-footer">
+      <div class="row-fluid">
+		<div class="social span2" align="center" id="socialist">
+	  <ul class="nav nav-list">
+	    <li class="nav-header">
+	      Social
+	    </li>
+	    	    <li><a href="http://www.twitter.com/Gastove"><i class="icon-twitter" style="color: #1f334b"></i>twitter</a></li>
+	    	    <li><a href="http://www.github.com/Gastove"><i class="icon-github" style="color: #1f334b"></i>github</a></li>
+	                
+	  </ul>
+	</div>
+		                <div class="links span2" align="center">
+          <ul class="nav nav-list">
+            <li class="nav-header"> 
+              Links
+            </li>
+            
+                        <li><a href="http://www.gastove.com">Home</a></li>
+                        <li><a href="http://getpelican.com/">Pelican</a></li>
+                        <li><a href="http://blog.gastove.com/">Professional Blog</a></li>
+                      </ul>
+        </div>
+        	<div class="site-nav span2" align="center">
+          <ul class="nav nav-list" id="site-links">
+            <li class="nav-header"> 
+              Site
+            </li>
+            <li><a href="."><i class="icon-home" style="color: #1f334b">
+                </i>Home</a></li>
+            <li><a href="./archives.html"><i class="icon-list" style="color: #1f334b">
+                </i>Archives</a></li>
+	    <li><a href="./tags.html"><i class="icon-tags" style="color: #1f334b">
+                </i>Tags</a></li>
+	    
+	                <li><a href="./" rel="alternate">
+                <i class="icon-rss-sign" style="color: #1f334b"></i>
+                Atom Feed</a></li>
+	  </ul>
+
+        </div>
+
+      </div> <!--end of fluid row-->
+    </div> <!--end of blog-footer-->
+    <hr />
+    <p align="center"><a href=".">Strangely Specific and Very Odd</a>
+      &copy; Ross Donaldson
+    Powered by <a href="github.com/getpelican/pelican">Pelican</a> and
+        <a href="https://twitter.github.com/bootstrap">Twitter Bootstrap</a>. 
+        Icons by <a href="http://fortawesome.github.com/Font-Awesome">Font Awesome</a> and 
+        <a href="http://gregoryloucas.github.com/Font-Awesome-More">Font Awesome More</a></p>
+
+  </div> <!--end of well -->
+</div> <!--end of container -->
+
+<!--/footer-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+
+
+
+</body>
+</html>

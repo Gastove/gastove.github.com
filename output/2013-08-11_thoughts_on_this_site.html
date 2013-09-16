@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Strangely Specific and Very Odd</title>
+    <meta name="description" content="">
+    <meta name="author" content="Ross Donaldson">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+    <script src="./theme/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.1.1/css/bootstrap.no-icons.min.css" rel="stylesheet">
+    <link href="./theme/local.css" rel="stylesheet">
+    <link href="./theme/pygments.css" rel="stylesheet">
+    <link href="./theme/font-awesome.css" rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Gudea:400,400italic|Alegreya+SC' rel='stylesheet' type='text/css'>
+</head>
+
+<body>
+<header class="blog-header">
+  <div class="container">
+    <div class="row-fluid">
+      <div class="span9">
+	<a href="." class="brand">Strangely Specific and Very Odd</a>
+      </div>
+
+      <div class="span3" id="blog-nav">
+	<ul class="nav nav-pills pull-right">
+	                        	   	    <li  class="active" >
+	      <a href="./category/code.html ">Code</a>
+	   	    <li >
+	      <a href="./category/data-science.html ">Data Science</a>
+	   	</ul>
+      </div>
+    </div> <!-- End of fluid row-->
+  </div>   <!-- End of Container-->
+</header>
+    
+<div class="container">
+    <div class="content">
+    <div class="row-fluid">
+
+        <div class="span10">
+            <div class='article'>
+      <div class="row-fluid">
+           <div class="content-title span9">
+             <h1>Thoughts on this Site So Far</h1b>
+           </div>
+      </div>
+    <div class="row-fluid">
+      <div class="span2">
+	<p>Sun, Aug 11 2013 </p>
+
+<p style="text-align: left;">
+Filed under <a href="./category/code.html">Code</a>
+</p>
+<p style="text-align: left;">
+ 
+    Tags <a href="./tag/octopress.html">Octopress</a> <a href="./tag/tools.html">Tools</a> </p>
+<p>
+<a href="http://twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="gastove">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>
+</p>
+      </div>
+      
+      <div class="span8">
+	<p>Huh. Okay. This... this kinda seems to be working. So far, this has been an interesting project. Over the last two days, I've spun up a personal web page and a blog, both from code (that is, not using WYSIWYG editors or 3rd Party stuff). I'm using what I can only describe as an Ecclectic Blend of tools -- something I have mixed feelings about. Lets do a little review, after the cut:</p>
+<!--more-->
+
+<h4>Scalatra</h4>
+<p>My main site is written in Scala, hosted on Heroku. In all, hosting has been one of the easiest parts; Heroku has some special configuration requirements, but  provides very good, accurate docs, and setup is mostly a breeze. There are, it turns out, several web frameworks for Scala -- most notably <a href="http://liftweb.net/">Lift</a>, <a href="http://www.playframework.com/">Play</a>, and <a href="www.scalatra.org">Scalatra</a>. I've gone with the last of these; so far, it's been easy as can be. Scalatra is intuitive, plays well with Heroku, and is even decently well documented. HTML Templating is handled with Scalate.</p>
+<p>Ah. Scalate.</p>
+<p>Scalate is the main game in town for Scala HTML templates, as near as I can tell. On the up side, it's powerful and fast and pretty robust. It supports more templating choices than I'd actually care to make, and that might be the down side. For mostly arbitrary reasons, I got going with Jade -- which is a terse form of Scaml, which in turn is Scala Haml.</p>
+<p>Perhaps you've already intuited the problem. There are a bunch of templating choices, and I picked the one that's the most abstreuse, the least interoperable, and the hardest to find support for. Scalatra doesn't <em>actually</em> support all of Jade (<em>cough</em> inheritance), so finding clear help for Scalatra Jade vs. Jade Itsownself is kind of a mess.</p>
+<p>All that said: Jade is both easy and fast to write, <em>very</em> DRY, and about as powerful as you could want. I've made my bed, and now I'll lay in it -- and I don't think that's too bad.</p>
+<h4>Octopress</h4>
+<p>I have fallen almost instantly in love with <a href="http://octopress.org/">Octopress</a>, a blogging framework that defaults to publishing on Github Pages (as it should be). So far it has been an absolute pleasure to use, though I cannot say the same for most of the themes I've tried. Now: fussing and whining about themes is maybe a dodgy proposition for a guy who couldn't write one to save himself from sharks. But then, that's why I went hunting for third party Octopress themes in the first place. There are <a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes">a lot of them</a>. They feature truly beautiful page stylings and truly peculiar CSS choices -- like defaulting to centering the text inside a code block. That's right. Centered. Code.</p>
+<p>Beyond some CSS-hackery to get code aligned correctly, my only other real trick was setting up syntax highlighting. (Octopress comes with Solar built-in, but I'm not, uh, a fan of Solar.) Thanks to some <a href="http://blog.alestanis.com/2013/02/04/octopress-and-the-twilight-color-scheme/">very good directions</a>, getting Twilight going didn't take long at all. And now, I get code blocks like this:</p>
+<div class="highlight"><pre><span class="n">def</span> <span class="n">fizzbuzz</span><span class="o">:</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="n">in</span> <span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">101</span><span class="p">)</span><span class="o">:</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="o">:</span>
+            <span class="n">output</span> <span class="o">+=</span> <span class="s">&quot;fizz&quot;</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="o">%</span> <span class="mi">5</span> <span class="o">==</span> <span class="mi">0</span><span class="o">:</span>
+            <span class="n">output</span> <span class="o">+=</span> <span class="s">&quot;buzz&quot;</span>
+        <span class="n">print</span> <span class="n">output</span>
+</pre></div>
+
+
+<p>{:lang="python"}</p>
+<p>Being the sort of doofus I am, I got Octopress working, then trotted out to find an emacs plugin to run it. Octopress is a framework that wraps the thorny-but-powerfull Jekyll blogging engine; it figures the emacs package would be <a href="https://github.com/nibrahim/Hyde">Hyde</a>.</p>
+<p>I want to like Hyde. I really do. It does all these things I want done -- integrating the various <code>rake</code> commands into my text editor. But man... it just doesn't actually work quite right. If I can hack it into Working, I'll post about it here, but for now I'm Octopress-ing via the shell.</p>
+<h4>In Conclusion</h4>
+<p>The web is a lovely place, with a remarkable number of very cool pieces that don't take long to pull together. It takes a little time, sure, and some command line know-how -- but I know have a web presence that makes me smile.</p>
+	<hr />
+      </div>
+    </div>
+    <div class="span10">
+      <h3>Comments</h3>
+    
+        </div>  
+    </div>
+        </div>
+        
+        
+    </div>     </div> </div>
+
+<!--footer-->
+<div class="container">
+  <div class="well" style="background-color: #E9EFF6">
+    <div id="blog-footer">
+      <div class="row-fluid">
+		<div class="social span2" align="center" id="socialist">
+	  <ul class="nav nav-list">
+	    <li class="nav-header">
+	      Social
+	    </li>
+	    	    <li><a href="http://www.twitter.com/Gastove"><i class="icon-twitter" style="color: #1f334b"></i>twitter</a></li>
+	    	    <li><a href="http://www.github.com/Gastove"><i class="icon-github" style="color: #1f334b"></i>github</a></li>
+	                
+	  </ul>
+	</div>
+		                <div class="links span2" align="center">
+          <ul class="nav nav-list">
+            <li class="nav-header"> 
+              Links
+            </li>
+            
+                        <li><a href="http://www.gastove.com">Home</a></li>
+                        <li><a href="http://getpelican.com/">Pelican</a></li>
+                        <li><a href="http://blog.gastove.com/">Professional Blog</a></li>
+                      </ul>
+        </div>
+        	<div class="site-nav span2" align="center">
+          <ul class="nav nav-list" id="site-links">
+            <li class="nav-header"> 
+              Site
+            </li>
+            <li><a href="."><i class="icon-home" style="color: #1f334b">
+                </i>Home</a></li>
+            <li><a href="./archives.html"><i class="icon-list" style="color: #1f334b">
+                </i>Archives</a></li>
+	    <li><a href="./tags.html"><i class="icon-tags" style="color: #1f334b">
+                </i>Tags</a></li>
+	    
+	                <li><a href="./" rel="alternate">
+                <i class="icon-rss-sign" style="color: #1f334b"></i>
+                Atom Feed</a></li>
+	  </ul>
+
+        </div>
+
+      </div> <!--end of fluid row-->
+    </div> <!--end of blog-footer-->
+    <hr />
+    <p align="center"><a href=".">Strangely Specific and Very Odd</a>
+      &copy; Ross Donaldson
+    Powered by <a href="github.com/getpelican/pelican">Pelican</a> and
+        <a href="https://twitter.github.com/bootstrap">Twitter Bootstrap</a>. 
+        Icons by <a href="http://fortawesome.github.com/Font-Awesome">Font Awesome</a> and 
+        <a href="http://gregoryloucas.github.com/Font-Awesome-More">Font Awesome More</a></p>
+
+  </div> <!--end of well -->
+</div> <!--end of container -->
+
+<!--/footer-->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/js/bootstrap.min.js"></script>
+
+
+
+</body>
+</html>
