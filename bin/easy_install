@@ -1,4 +1,4 @@
-#!/home/gastove/Code/blag/bin/python
+#!/home/rdonaldson/Code/blag/bin/python
 # EASY-INSTALL-ENTRY-SCRIPT: 'setuptools==0.9.8','console_scripts','easy_install'
 __requires__ = 'setuptools==0.9.8'
 import sys

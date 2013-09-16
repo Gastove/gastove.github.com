@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- #
 from __future__ import unicode_literals
-import pelican_gist
+# import pelican_gist
 
 AUTHOR = u'Ross Donaldson'
 SITENAME = u'Strangely Specific and Very Odd'
@@ -49,4 +49,4 @@ GOOGLE_ANALYTICS = 'UA-43979937-2'
 # DISQUS_SITENAME = 'skillet'
 
 # Uncomment following line if you want document-relative URLs when developing
-RELATIVE_URLS = True
+# RELATIVE_URLS = False
