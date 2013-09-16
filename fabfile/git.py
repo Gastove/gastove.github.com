@@ -5,8 +5,8 @@
 from fabric.api import local, puts, settings
 from time import strftime, localtime
 
-SOURCE_BRANCH = "master"
-DEPLOY_BRANCH = "gh-pages"
+SOURCE_BRANCH = "revamp"
+DEPLOY_BRANCH = "master"
 
 def change_branch(branch):
     """ Switch to specified Branch """
