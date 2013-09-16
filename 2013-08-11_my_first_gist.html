@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+                <title>Strangely Specific and Very Odd</title>
+        <meta charset="utf-8" />
+                                                                        </head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href=".">Strangely Specific and Very Odd <strong></strong></a></h1>
+        </header><!-- /#banner -->
+        <nav id="menu"><ul>
+                                          </ul></nav><!-- /#menu -->
+        <section id="content" class="body">
+  <header>
+    <h2 class="entry-title">
+      <a href="./2013-08-11_my_first_gist.html" rel="bookmark"
+         title="Permalink to Pure Show-and-Tell: My First Gist">Pure Show-and-Tell: My First Gist</a></h2>
+  
+  </header>
+  <footer class="post-info">
+    <abbr class="published" title="2013-08-11T00:00:00">
+      Sun, Aug 11 2013
+    </abbr>
+        <address class="vcard author">
+      By <a class="url fn" href="./author/ross-m-donaldson.html">Ross M. Donaldson</a>
+    </address>
+      </footer><!-- /.post-info -->
+  <div class="entry-content">
+    <p>And now, a barefaced excuse to muck about with Octopress markdown and plugins. Presenting: my first gist. Do you care? The whole works (and some verbiage) after the cut.</p>
+<!--more-->
+
+<p>While ambling about the internet trying to style my schamncy new web page, I did two things, one clever and one not:</p>
+<ul>
+<li><strong>Clever</strong>: I realized I didn't want to write my own CSS sheets, because fuck that noise.</li>
+<li><strong>Not-So-Much</strong>: I forgot about Twitter Bootstrap.</li>
+</ul>
+<p>I found the pleasing, if peculiar, <a href="www.getskeleton.com">Skeleton.css</a> -- which is nice looking and open source and free, and rescales (reasonably) well on mobile. Only problem: the provided page template is in straight HTML, and I'm writing in Scalate's implementation of Jade (itself a reduction of Scaml, which is Scala Haml. Oye.) So, I re-wrote the thing. Maybe this will help another person, ever? (Yeah, I think it's a funny line too.)</p>
+<h3>The Gist</h3>
+<div class="gist">
+    <script src='https://gist.github.com/6201942.js?file=calavera.jade'></script>
+    <noscript>
+        <pre><code>"-# Setting Jade Variables\n-@ val title: String = \"Default Title WOOOO!\"\n-@ val body: String = \"Default Body WOOOOO!\"\n\n!!!\n/ [if lt IE 7]\nhtml{:class => \"ie ie6\", :lang => \"en\"}\n/ [if IE 7]\nhtml{:class => \"ie ie7\", :lang => \"en\"}\n/ [if IE 8]\nhtml{:class => \"ie ie8\", :lang => \"en\"}\n/ [if (gte IE 9) | !{IE)]\nhtml{:lang => \"en\"}\n\nhead\n  / The Basics\n  meta(charset=\"utf-8\")\n  title= title\n  meta(name=\"description\" content=\"\")\n  meta(name=\"author\" content=\"\")\n  /Mobile-specific Meta\n  meta(name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\")\n\n  / CSS\n  link(rel=\"stylesheet\" href=\"stylesheets/base.css\")\n  link(rel=\"stylesheet\" href=\"stylesheets/skeleton.css\")\n  link(rel=\"stylesheet\" href=\"stylesheets/layout.css\")\n  \n    / [if lt IE 9]\n    script{:src => \"http://html5shim.googlecode.com/svn/trunk/html5.js\"}\n\n  / Favicons\n  link(rel=\"shortcut icon\" href=\"images/favicon.ico\")\n  link(rel=\"apple-touch-icon\" href=\"images/apple-touch-icon.png\")\n  link(rel=\"apple-touch-icon\" sizes=\"72x72\" href=\"images/apple-touch-icon-72x72.png\")\n  link(rel=\"apple-touch-icon\" sizes=\"114x114\" href=\"images/apple-touch-icon-114x114.png\")\n\n  body\n    /Primary Page Layout\n    -# The original skeleton boilerplate provides a good deal of stuff here; I'm omitting most of it. \n    div(class=\"container\")\n      != body"</code></pre>
+    </noscript>
+</div>
+  </div><!-- /.entry-content -->
+</section>
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                which takes great advantage of <a href="http://python.org">Python</a>.
+                </address><!-- /#about -->
+        </footer><!-- /#contentinfo -->
+</body>
+</html>
