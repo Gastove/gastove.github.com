@@ -5,7 +5,7 @@
 from fabric.api import local, puts, settings
 from time import strftime, localtime
 
-SOURCE_BRANCH = "revamp"
+SOURCE_BRANCH = "dev"
 DEPLOY_BRANCH = "master"
 
 def change_branch(branch):
