@@ -16,6 +16,7 @@ bin
 var
 lib/
 !lib/theme
+bin/
 
 # Installer Logs
 pip-log.txt
