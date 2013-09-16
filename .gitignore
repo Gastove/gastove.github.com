@@ -14,7 +14,7 @@ eggs
 parts
 bin
 var
-lib/python2.7
+lib/python2.7/
 
 # Installer Logs
 pip-log.txt
