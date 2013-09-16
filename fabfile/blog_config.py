@@ -17,7 +17,7 @@ DEFAULT_LANG = u'en'
 DEFAULT_DATE_FORMAT = '%a, %b %d %Y'
 DEFAULT_PAGINATION = 5
 MARKUP = ('md', 'markdown')
-PLUGINS = ['pelican_gist']
+# PLUGINS = ['pelican_gist']
 
 # Sensible defaults for pelican_gist
 GIST_CACHE_ENABLED = True
