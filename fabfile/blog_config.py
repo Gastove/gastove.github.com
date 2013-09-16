@@ -7,7 +7,7 @@ AUTHOR = u'Ross Donaldson'
 SITENAME = u'Strangely Specific and Very Odd'
 SITEURL = 'blog.gastove.com'
 
-THEME = '../lib/theme/svbhack'
+THEME = '../theme/svbhack'
 
 USER_LOGO_URL = 'http://www.gravatar.com/avatar/a942cea13e537bb0ea754b6d216c3377?size=160'
 
