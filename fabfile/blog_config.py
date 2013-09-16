@@ -7,7 +7,9 @@ AUTHOR = u'Ross Donaldson'
 SITENAME = u'Strangely Specific and Very Odd'
 SITEURL = 'blog.gastove.com'
 
-THEME = '../lib/theme/built-text'
+THEME = '../lib/theme/svbhack'
+
+USER_LOGO_URL = 'http://www.gravatar.com/avatar/a942cea13e537bb0ea754b6d216c3377?size=160'
 
 TIMEZONE = 'US/Pacific'
 
@@ -32,17 +34,18 @@ OUTPUT_PATH = '../output'
 
 # Blogroll
 LINKS =  (('Home', 'http://www.gastove.com'),
-          ('Pelican', 'http://getpelican.com/'),
-          ('Professional Blog', 'http://blog.gastove.com/'),)
+          ('Food', 'http://blog.gastove.com/'),
+#          ('Pelican', 'http://getpelican.com/'),
+)
 
 # Social widget
-SOCIAL = (('twitter', 'http://www.twitter.com/Gastove'),
-          ('github', 'http://www.github.com/Gastove'),)
+SOCIAL = (('Twitter', 'http://www.twitter.com/Gastove'),
+          ('Github', 'http://www.github.com/Gastove'),)
 
 TWITTER_USERNAME = 'gastove'
 
 # Handy Dandy Third Parties
-# GOOGLE_ANALYTICS = 'UA-43979937-1'
+GOOGLE_ANALYTICS = 'UA-43979937-2'
 # DISQUS_SITENAME = 'skillet'
 
 # Uncomment following line if you want document-relative URLs when developing
