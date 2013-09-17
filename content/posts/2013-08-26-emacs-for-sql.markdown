@@ -6,14 +6,6 @@ Tags: Tools, SQL, emacs, GTD
 Category: Data Science
 Summary: Wiring up SQL to Emacs Prelude
 
----
-layout: post
-title: "Setting up Emacs Prelude for Multiple SQL Databases and Query Development"
-date: 2013-08-26 20:47
-comments: true
-published: true
-categories:
----
 Ah, emacs. What can't you do?
 
 ...actually, that's the problem. Emacs, for all its splendor, can be an infinite rabbit hole of customization, modification, tweaking, scripting, and parens. I recently discovered [Emacs Prelude](www.github.com/bbatsov/prelude), and I recommend it heartily. It does, for the most part, what it says on the tin: "The final product offers an easy to use Emacs configuration for Emacs newcomers and lots of additional power for Emacs power users." Check and check.
