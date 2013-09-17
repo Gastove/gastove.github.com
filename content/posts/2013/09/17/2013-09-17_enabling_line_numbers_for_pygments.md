@@ -2,9 +2,9 @@ Title: Enabling Line Numbers for Pygments Code Blocks on Pelican
 Author: Ross Donaldson
 Date: 2013-09-17 09:38
 Slug: 2013-09-17_enabling_line_numbers_for_pygments
-Category:
-Tags:
-Summary:
+Category: Code
+Tags: Pygments, Pelican, Tools
+Summary: Code colorization in Pygments is a lovely thing for a Pelican blog -- but what if you want line numbers?
 
 
 I recently migrated this blog from Octopress over to Pelican; in all, it was a pretty simple process. With a moment of Googling, you can have your pick of exhaustive tutorials on how to do this well -- or, you can do what I did and Just Wing It. This is not actually a post about how to migrate.
