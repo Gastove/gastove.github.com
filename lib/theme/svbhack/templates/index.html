@@ -6,7 +6,7 @@
     <h3><a href="{{ SITEURL }}/{{ article.url }}">{{ article.title }}</a></h3>
   </div>
   <div id="article_text">
-    {{ article.summary }} <font color = #999999>read more...</font>
+    {{ article.summary }} <a href="{{ SITEURL }}/{{ article.url}}">read more...</a>
   </div>
 </article>
 {% if not loop.last %}
