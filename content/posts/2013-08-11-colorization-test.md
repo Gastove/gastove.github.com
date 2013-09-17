@@ -9,13 +9,13 @@ Summary: This is only a test
 
 Okay. Let's colorize, shall we?
 
-```python
-def testfunc(args, moreargs):
-    for x in range(1, 101)
+
+    #!python
+    def testfunc(args, moreargs):
+        for x in range(1, 101)
         fizzbuzz = ""
         if x % 3 == 0:
             fizzbuzz += "fizz"
         if x % 5 == 0:
             fizzbuzz += "buzz"
         print fizzbuzz
-```
