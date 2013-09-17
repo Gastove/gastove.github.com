@@ -153,4 +153,3 @@ class Path(val path: List[AndroidNode]) extends AndroidPath {
 Now, we just have to see how Steve solved it. Probably lasers.
 
 [^1]: Which is not saying much. Heroku gives you 512mb per 1x Dyno. Feh.
-n
