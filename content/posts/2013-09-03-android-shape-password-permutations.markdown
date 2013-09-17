@@ -33,122 +33,121 @@ One node can always reach any other node as long as you add the node that's "in 
 
 When I'm coding, I call this moment, "the Collapse". It's the point at which I can suddenly see the underlying structure I've been feeling out and I can work to realize it, when I can stop laying down material and start carving away at it. The above let me peel away more than half the code I'd put in place, and while the result wasn't bug free (editing still required), it was A) comprehensible, B) terse, C) fixable, and D) kinda elegant. It's this last that often is my surest indicator I'm on the right path -- when things stop looking less _eugh_ and more _oooh!_
 
-The final product needs some space to run; I had planned it as an interactive demo on my web page, but it uses far more RAM than Heroku will allow me*. The code lives in its original state in my repo for gastove.com, but I also pulled it all together, like so:
+The final product needs some space to run; I had planned it as an interactive demo on my web page, but it uses far more RAM than Heroku will allow me[^1]. The code lives in its original state in my repo for gastove.com, but I also pulled it all together, like so:
 
-```scala
-import scala.math.abs
+    #!scala
+    import scala.math.abs
 
-object AndroidPasswordGenerator{
+    object AndroidPasswordGenerator{
 
-  def main(args: Array[String]) {
-    val grid = NodeGrid.generateGrid
-    val paths = findPath(grid, new EmptyPath)
-    paths.foreach{println}
-  }
+      def main(args: Array[String]) {
+        val grid = NodeGrid.generateGrid
+        val paths = findPath(grid, new EmptyPath)
+        paths.foreach{println}
+      }
 
-  def findPath(nodes: List[AndroidNode], path: AndroidPath): List[AndroidPath] = {
-    nodes.flatMap{ node =>
-       val newPath = path.addToPath(node)
-       val remainingNodes = nodes.filter{ node =>
-         !newPath.contains(node)
-       }
-       if (newPath.length >= 9) List(newPath)
-       else if (newPath.length >= 4) findPath(remainingNodes, newPath) ++ List(newPath)
-       else findPath(remainingNodes, newPath)
+      def findPath(nodes: List[AndroidNode], path: AndroidPath): List[AndroidPath] = {
+        nodes.flatMap{ node =>
+           val newPath = path.addToPath(node)
+           val remainingNodes = nodes.filter{ node =>
+             !newPath.contains(node)
+           }
+           if (newPath.length >= 9) List(newPath)
+           else if (newPath.length >= 4) findPath(remainingNodes, newPath) ++ List(newPath)
+           else findPath(remainingNodes, newPath)
+        }
+      }
     }
-  }
-}
 
-class AndroidNode(x: Int, y: Int) {
+    class AndroidNode(x: Int, y: Int) {
 
-  lazy val neighbors = getAdjacentNodes
+      lazy val neighbors = getAdjacentNodes
 
-  override def toString(): String = "<" + this.x + "," + this.y + ">"
+      override def toString(): String = "<" + this.x + "," + this.y + ">"
 
-  def - (other: AndroidNode): AndroidNode = {
-      new AndroidNode(diff(this.x, other.x), diff(this.y, other.y))
-        }
+      def - (other: AndroidNode): AndroidNode = {
+          new AndroidNode(diff(this.x, other.x), diff(this.y, other.y))
+            }
 
-  def diff(a: Int, b: Int): Int = {
-      if (a == b) a else abs(a - b)
-        }
+      def diff(a: Int, b: Int): Int = {
+          if (a == b) a else abs(a - b)
+            }
 
-  def getAdjacentNodes(): List[AndroidNode]= {
-    def inRange(param: Int): Boolean = { (param > 0 && param < 4) }
-    (-1 to 1)
-      .toList
-      .flatMap{ xMod =>
+      def getAdjacentNodes(): List[AndroidNode]= {
+        def inRange(param: Int): Boolean = { (param > 0 && param < 4) }
         (-1 to 1)
           .toList
-          .map{ yMod =>
-            AndroidNode(this.x + xMod, this.y + yMod)
+          .flatMap{ xMod =>
+            (-1 to 1)
+              .toList
+              .map{ yMod =>
+                AndroidNode(this.x + xMod, this.y + yMod)
+              }
           }
+        .filter{ node =>
+          (inRange(node.x) && inRange(node.y)) && node != this
+        }
       }
-    .filter{ node =>
-      (inRange(node.x) && inRange(node.y)) && node != this
+
     }
-  }
 
-}
-
-// Grid Generator
-object NodeGrid {
-  def generateGrid(): List[AndroidNode] = {
-    (1 to 3).toList.flatMap{ x => (1 to 3).toList.map{y => AndroidNode(x, y)}}
-  }
-}
-
-// Base Path Class
-abstract class AndroidPath {
-  val path: List[AndroidNode]
-  def isEmpty(): Boolean
-  def length(): Int
-  def contains(node: AndroidNode): Boolean
-  def addToPath(candidateNode: AndroidNode): AndroidPath
-  def toString(): String
-}
-
-class EmptyPath extends AndroidPath {
-
-  val path: List[AndroidNode] = List()
-  def isEmpty() = true
-  def length(): Int = 0
-  def contains(node: AndroidNode): Boolean = false
-  def addToPath(candidateNode: AndroidNode): AndroidPath =
-    new Path(List(candidateNode))
-
-  override def toString(): String = "<Empty Path>"
-
-}
-
-class Path(val path: List[AndroidNode]) extends AndroidPath {
-
-  def length(): Int = this.path.length
-
-  def isEmpty(): Boolean = false
-
-  def contains(node: AndroidNode): Boolean = this.path.contains(node)
-
-  def addToPath(candidateNode: AndroidNode): Path = {
-    if (this.path.head.neighbors.contains(candidateNode))
-      new Path(candidateNode +: this.path)
-    else {
-      val interstitial = getInterstitialNode(candidateNode)
-      if (this.path.contains(interstitial))
-        new Path(candidateNode +: this.path)
-      else
-        new Path(candidateNode +: interstitial +: this.path)
+    // Grid Generator
+    object NodeGrid {
+      def generateGrid(): List[AndroidNode] = {
+        (1 to 3).toList.flatMap{ x => (1 to 3).toList.map{y => AndroidNode(x, y)}}
+      }
     }
-  }
 
-  def getInterstitialNode(candidateNode: AndroidNode): AndroidNode =
-    this.path.head - candidateNode
+    // Base Path Class
+    abstract class AndroidPath {
+      val path: List[AndroidNode]
+      def isEmpty(): Boolean
+      def length(): Int
+      def contains(node: AndroidNode): Boolean
+      def addToPath(candidateNode: AndroidNode): AndroidPath
+      def toString(): String
+    }
 
-  override def toString(): String =
-      this.path.reverse.mkString("->")
+    class EmptyPath extends AndroidPath {
 
-}
-```
+      val path: List[AndroidNode] = List()
+      def isEmpty() = true
+      def length(): Int = 0
+      def contains(node: AndroidNode): Boolean = false
+      def addToPath(candidateNode: AndroidNode): AndroidPath =
+        new Path(List(candidateNode))
+
+      override def toString(): String = "<Empty Path>"
+
+    }
+
+    class Path(val path: List[AndroidNode]) extends AndroidPath {
+
+      def length(): Int = this.path.length
+
+      def isEmpty(): Boolean = false
+
+      def contains(node: AndroidNode): Boolean = this.path.contains(node)
+
+      def addToPath(candidateNode: AndroidNode): Path = {
+        if (this.path.head.neighbors.contains(candidateNode))
+          new Path(candidateNode +: this.path)
+        else {
+          val interstitial = getInterstitialNode(candidateNode)
+          if (this.path.contains(interstitial))
+            new Path(candidateNode +: this.path)
+          else
+            new Path(candidateNode +: interstitial +: this.path)
+        }
+      }
+
+      def getInterstitialNode(candidateNode: AndroidNode): AndroidNode =
+        this.path.head - candidateNode
+
+      override def toString(): String =
+          this.path.reverse.mkString("->")
+
+    }
 
 Now, we just have to see how Steve solved it. Probably lasers.
 

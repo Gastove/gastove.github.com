@@ -16,7 +16,9 @@ TIMEZONE = 'US/Pacific'
 DEFAULT_LANG = u'en'
 DEFAULT_DATE_FORMAT = '%a, %b %d %Y'
 DEFAULT_PAGINATION = 5
+
 MARKUP = ('md', 'markdown')
+MD_EXTENSSIONS = ['codehilite', 'footnotes']
 # PLUGINS = ['pelican_gist']
 
 # Sensible defaults for pelican_gist
