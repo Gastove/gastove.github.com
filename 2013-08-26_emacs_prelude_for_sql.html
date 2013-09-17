@@ -60,15 +60,7 @@
     <h3><a href="./2013-08-26_emacs_prelude_for_sql.html">Setting up Emacs Prelude for Multiple SQL Databases and Query Development</a></h3>
   </div>
   <div id="article_text">
-    <hr />
-<p>layout: post
-title: "Setting up Emacs Prelude for Multiple SQL Databases and Query Development"
-date: 2013-08-26 20:47
-comments: true
-published: true
-categories:</p>
-<hr />
-<p>Ah, emacs. What can't you do?</p>
+    <p>Ah, emacs. What can't you do?</p>
 <p>...actually, that's the problem. Emacs, for all its splendor, can be an infinite rabbit hole of customization, modification, tweaking, scripting, and parens. I recently discovered <a href="www.github.com/bbatsov/prelude">Emacs Prelude</a>, and I recommend it heartily. It does, for the most part, what it says on the tin: "The final product offers an easy to use Emacs configuration for Emacs newcomers and lots of additional power for Emacs power users." Check and check.</p>
 <p>That still leaves some customization to be done, and a particularly common use case in my work is SQL query development, often in the context of embedded SQL within an automated reporting framework. Developing queries with SQL GUIs like MySQL WorkBench and Sequel Pro is lovely... but I don't always have access to them, and copy-pasting queries from one editor to another is a lovely way to introduce bizarre characters into an otherwise pristine query. (And who doesn't love debugging those!) A better answer would be to manipulate embedded SQL in-place -- in this case, from within Emacs. Fortunately, this isn't hard.</p>
 <!--more-->
