@@ -42,9 +42,21 @@ This is really the idea that got me started on this tear in the first place. It'
 
 > Data work has a core set of skills that are conceptually alike. Computer science, coding, statistics, data visualization: these are all rigorous skills that I find highly inter-operable and a little synergistic (becoming a better computer scientist improves more than just my grasp of computer science). These tasks work the same parts of my brain. When it comes time to package up a report, I suddenly pull out Excel or Tableau -- tools that assume you have some base data you want to load and show. They have as little in common with each other as they do with the work of generating that base data, and being good at Excel or Tableau has _no relationship_, conceptually or otherwise, with being good at data or data visualization or computers at all.
 
-This problem permeates down into some pretty core data tools. SAS and SPSS each have their own ways they want you to work, which are different from Matlab or Octave. While R has a proud, mostly-internally-consistent heart, every R package operates on a completely different set of design metaphors that every other package.[^rpkg] The upside is that it's all programming; the downside is having to learn something thorny and new to speed up already difficult tasks. Tools like Excel or Tableau are even worse, operating on design metaphors that don't make an elegant conceptual transition from slogging about in code.
+This problem permeates down into some pretty core data tools. SAS and SPSS each have their own ways they want you to work, which are different from Matlab or Octave. While R has a proud, mostly-internally-consistent heart, every R package operates on a completely different set of design metaphors that every other package.[^rpkg] The upside is that it's all programming; the downside is having to learn something thorny and new to speed up already difficult tasks. Tools like Excel or Tableau are even worse, operating on design metaphors that don't make an elegant conceptual transition from slogging about in code. What could be better, after all, than completing your exploratory analysis, getting all geared up to do your full analysis, and... taking a big step back to completely re-invent your process to make it jive with a totally different level of abstraction needed to pull the data into a different visualization framework!
 
-Lets consider:
+Maybe snakes. Snakes would be better.
+
+### The Use Case
+
+What's the point? What's the core need? What would the _perfect_ thing look like? I think:
+
+1. **Portable**: We need to deliver information to people; that means it needs to be easy to open, with as little specialized software as possible. No skill should be required to _view_ your report.
+2. **Self-Serve**: The best thing is when you can put out the birdfeeder and let the birds feed themselves. Generating a report is good; generating a report that self-updates is better. Generating a self-updating report that other people understand how to get what they need from? Fan-damn-tastic.
+3. **Parts-complete**: The report should package together source data, process, code, final data set, prose, figures -- the whole works. It should do so without the wrong parts getting in the way at the wrong time.
+4. **Transparent**: I mean something slightly subtle here: a report should capture everything it took to make the report. The amount of baked-in tacit knowledge should be very low.
+5. **Powerful**: We as data workers have tremendous capacities for imagination, insight, analysis, comprehension; we should be able to fully express ourselves.
+
+### And now, some reporting options
 
 #### Excel
 
@@ -54,7 +66,7 @@ I've touched on the upsides all ready: Excel is everywhere. Excel has become the
 
 The thing is: Excel is actually a hammer a la [PHP](http://www.codinghorror.com/blog/2012/06/the-php-singularity.html). In precisely the same way as PHP, it has come to be ubiquitous in the work of data. Consider the problem of the Excel daily dashboard:
 
-You need to send out a daily report for people who want to monitor the pulse of a project. They need to be able to access all your data, fiddle with it, so you build the report in Excel. This works pretty well! Wait, now you need to add something -- well you can just visualize that right in one of the tabs! Perfect. Oh hey, an extra column needs adding, and another -- oh god, did we just change formats on the regular reporting email? Oh hey, you're going on leave? Quick. Teach so-and-so about your reports.
+You need to send out a daily report for people who want to monitor the pulse of a project. They need to be able to access all your data, fiddle with it, so you build the report in Excel. This works pretty well! Wait, now you need to add something -- well you can just visualize that right in one of the tabs! Perfect. Oh hey, an extra column needs adding, and another -- oh god, did we just change formats on the regular reporting email? Oh hey, you're going on leave? Quick. Teach so-and-so about your reports. It will take a week; it will not be about analysis or data. It will be about how you make Excel dance.
 
 Excel dashboards spiral quickly out of control; they become these living, breathing entities packed with tacit knowledge, and that tacit knowledge is _very difficult_ to discern from looking at a monolithic Excel document. Code can be just as occult and inaccessible, sure, but there are also best practices that we as developers embrace to try and make our code clear, and those patterns are difficult to embrace in Excel, I think.
 
@@ -62,10 +74,67 @@ And lets not even _start_ on all the ways Excel is a fail for those of us who li
 
 #### Tableau
 
+This one I have seriously mixed feelings about.
+
+Tableau has the obvious advantage of being purpose built -- and recently -- for the job of doing analysis that shows data. It contains an incredibly powerful engine for getting this job done. Tableau can ingest structured data from almost anything; it can connect to a living data store and update your work as you go, or ingest a SQL statement and load that data locally to dramatically increase analysis speed. Once you're happy with your work, you can publish it to a server, view-able by anybody with the right license.
+
+And the right browser.
+
+On a PC.
+
+Okay, so the wheels kinda just came off, but it's ok, we got this. Have you _seen_ the number of ways Tableau will let you visualize your data? It's completely unreal. You can aggregate, write eloquent equations, add hierarchies and subcategories and groups -- all of which immediately make your data not just explored but explore-able. By other people. You do the work, Tableau bakes in this heady magic that allows other people to wander interactively through your creation. Want to be able to quickly filter your data to show different cohorts? Built-in. Wanna make a dashboard? It's done. Seriously.
+
+And yet.
+
+We just clipped by major beef number one: magic. There's a **lot** of magic. It's everywhere. You poke a button and stuff just _happens_ and it can be completely bewildering and what the hell just happened to my OH GOD WHAT IS THAT? This is an analytics tool with a prominent "back" button. Because you'd never, ever keep your sanity without one. This can be a challenge for somebody accustomed to the _Grammar of Graphics_ approach of `ggplot2`; I expect to take a step and then another step and build up my visualization in layers. Tableau expects me to explore and visualize at the same time, moving through this stack of visualizations I try on like sweaters.
+
+_And it recommends the sweaters_.[^beef] Immensely jarring is the experience of adding another piece to your visualization and watching in dismay as the recommendation engine takes over and everything becomes horribly different. This is a perfectly distinct question from whether or not the recommendations are any good; it's about the wrenching cognitive cost of suddenly trying to decipher something that is entirely other than what you intended or expected.
+
+Have I mentioned that the licenses are hideously expensive? Tableau 8 is changing some of the OS requirements, thank heavens, but this stuff is... an investment, both in money and, frankly, in time. As somebody with a great deal of _intention_ about his work, I'm accustomed to simply writing lines of code that describe what I'd like to see and then adjusting my declarations as needed. Tableau is a different skill. It speaks an entirely different language than the rest of my work. Have I made something excellent in R or Python? Well, that's terrible -- it wont transfer. Sure, I could write my stuff out to a CSV, but Tableau sits on live data! The value of not having to re-run a report is very, very high; I'm not yet sure if it's worth the cost of Tableau.
+
+#### Sweave and IPython Notebooks
+
+Oh darling, darling these things. They are built for me to like them; this is bad news.
+
+[Sweave](http://www.stat.uni-muenchen.de/~leisch/Sweave/) and [IPython Notebooks](http://ipython.org/notebook.html) do roughly the same thing -- that is, they are both ways of writing a document that is code, prose, and code output all together in one place. The implementation details vary; Sweave is for R and builds mostly to LaTeX, while IPN is for (gasp!) Python and is mostly web hosted. The basic gist is uniform: write code, evaluate code, write prose in prose blocks and place code output, compile all together, lead a happy life. I think I'm in love with IPN; I think Sweave might be the best reason I've found to stick with R.
+
+It can't last.
+
+They've got their strengths. The most overt, for me, is that they heal the Conceptual Schism. You aren't just building your report or visualization in the same language as your analysis, you're building the whole thing _at the same time_. It's full stack, consistent from start to end. This makes it beautifully transparent; all the data is captured, as well as the knowledge of how to make the report. Both, actually, are vastly more portable than Excel _or_ Tableau. (LaTeX compiles to PDF; IPN serves a web client that requires no plugins.)
+
+Let's codify the bad news. Let's do it with bullet points:
+
+* These tools? Not sexy. Frequently, not glossy. LaTeX is more or less the gold standard for typesetting mathematics, but beyond that, there's none of the full-color-GUI _snap_ of Tableau or the familiarity (often called "trust") of Excel.
+* So far, IPN is deeply good for sharing analytics work with other analysts and not really ideal for sharing reports with people for whom the code isn't first-order information. This can probably be worked around, but it's not the dominant paradigm it was designed for. (If anybody knows of awesome things that prove me wrong on this, oh man, post 'em here.)
+* Sweave makes PDFs; that means something that must be downloaded and opened by anybody interested. I feel fine about this, but it's not typically a stand-alone solution. True, Sweave means LaTeX means htmlatex means just use it to typeset an email, hey? Now your email is a zillion pages long and _can't_ be downloaded. Awesome.
+** Also, with Sweave... you still have to use R. My thoughts on R really deserve their own post; for now, I'll use a footnote.[^r]
+* Any prayer of interactivity is not... here. This is not self-serve. This is not something your boss will take and play with. Sweave at least captures how you _got_ the data; IPN does bake everything in, but there's no "download this data as a CSV" facility unless you make one.
+
+So. That's... a thing.
+
+#### Homebrewed Roll-yer-own Reportfest
+
+This is actually an option and it works. It works about as well as your servers and your databases and whoever you have implementing the code.
+
+Right? Right.
+
+This option is hard. It has some advantages. It works best for regular, daily-dashboard-style reporting, if you're in to that kind of thing. You can, for example, create python scripts that run on a cron job, compile an email, and send it to you for processing Some How Or Another. Depending on your sophistication with python or R, those scripts could generate charts and everything. Maybe the script is actually server code -- a controller plus models, or a service or a module, depending on your particular server idiom. Maybe you have a dedicated analytics DB you can hit? Yeah, I thought not.
+
+This option is both very good and very tricky. It supplements things well; we've had marvelous success with an automated-email-plus-analyst approach. You could automated IPN or Sweave, if you felt like it. Or, you could whole-hog on d3.js and just script up self-serve webpages, if you have some sort of internal portal or admin tool.
+
+This can be the best option and the very, very worst. Given the cost, I'm leery of it; it takes a *lot* of time to set up something like this and to do it well, and once it's done it seldom gets maintained. Besides -- whose perview is it? The server code is the domain of the engineers, but numbers fall under the analysts. Who commits bug fixes, and how are they prioritized? Be wary of this. It can get messy.
+
+### Conclusion
+
+The whole problem with this is that I haven't really concluded anything, myself. There are some powerful tools; they all have problems. Maybe a problem I haven't taken seriously enough is, "are you employing an analyst or a data scientist?" Perhaps it's conceptually jarring for me to emerge from the cave of code into the brightly lit GUI of Tableau in a way it simply wouldn't be for somebody who didn't identify like I do. Perhaps there is a class of professionals for whom Tableau is a remarkable and powerful tool -- one to be incorporated into their professional toolbox as Python and R are incorporated in to mine.
+
+Meanwhile, I still have to get my work done.
 
 
+[^beef]: Major Beef No. 2 for you beef counters at home.
 [^win]: And let me be frank about this: no thanks.
 [^dataexcep]: There are exceptions; regular reporting and dashboards, for instance, should expose their data with the understanding that once it's been vetted and questioned once it probably wont be poked at every single time the dashboard goes out.
 [^codeisdata]: Yes it is. If anybody tells you different, they are wrong.
 [^rpkg]: You can try and do without packages, but that overlooks a huge amount of very good work that will save you important amounts of time -- if you can just figure out how the f%&$! they work.
 [^zambia]: Which was totally a place when I wrote a report about it.
+[^r]: Buried deep inside R is the proudly beating heart of an awesome domain-specific language -- but it's buried pretty deep. I find that I haven't been able to divorce myself from using packages; they overcome many of R's built-in shortcomings, like copying huge datasets over and over again. But R has a hideous syntax, and the packages, in their desire to 'fix' the problems inherited from R itself, often implement New and Different operational paradigms, syntax, and assorted nonsense. The result is that R is profoundly hard to share with non-R programmers in a way simply not true of something like Python. More and more, I'm considering that to be an important and crippling flaw.
