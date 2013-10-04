@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 AUTHOR = u'Ross Donaldson'
 SITENAME = u'Strangely Specific and Very Odd'
-SITEURL = 'blog.gastove.com'
+SITEURL = 'http://blog.gastove.com'
 
 THEME = '../lib/theme/svbhack'
 
