@@ -26,10 +26,10 @@ This is where things get a touch stupid. It turns out there's a ridiculous numbe
 This last one, it turns out, is what we want. `Markdown` supports an extension called `codehilite`; `codehilite` uses a different syntax, but allows (through syntax alone) arguments to be passed in to `Pygments` -- arguments like line numbers. So this:
 
 ```markdown
-```python
-def foo():
-	print "Bar!"
-```
+	```python
+	def foo():
+		print "Bar!"
+	```
 ```
 changes to this:
 
