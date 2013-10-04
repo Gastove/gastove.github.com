@@ -73,17 +73,15 @@
 </ol>
 <p>This is where things get a touch stupid. It turns out there's a ridiculous number of ways to indicate to <code>Markdown</code> that a codeblock needs working over. You can use fences (a string of "~~~~" or "****"); you can open and close with the triple-backtick (<code>```scala println("Hello World")```</code>); you can use a system of indents and open symbols.</p>
 <p>This last one, it turns out, is what we want. <code>Markdown</code> supports an extension called <code>codehilite</code>; <code>codehilite</code> uses a different syntax, but allows (through syntax alone) arguments to be passed in to <code>Pygments</code> -- arguments like line numbers. So this:</p>
-<div class="highlight"><pre><span class="err">```</span><span class="n">python</span>
-<span class="n">def</span> <span class="n">foo</span><span class="p">()</span><span class="o">:</span>
-    <span class="n">print</span> <span class="s">&quot;Bar!&quot;</span>
+<div class="highlight"><pre>    <span class="err">```</span><span class="n">python</span>
+    <span class="n">def</span> <span class="n">foo</span><span class="p">()</span><span class="o">:</span>
+        <span class="n">print</span> <span class="s">&quot;Bar!&quot;</span>
+    <span class="err">```</span>
 </pre></div>
 
 
-<div class="highlight"><pre><span class="n">changes</span> <span class="n">to</span> <span class="n">this</span><span class="o">:</span>
-
-<span class="err">```</span><span class="n">markdown</span>
-
-    <span class="err">#</span><span class="o">!</span><span class="n">python</span>
+<p>changes to this:</p>
+<div class="highlight"><pre>    <span class="err">#</span><span class="o">!</span><span class="n">python</span>
     <span class="n">def</span> <span class="n">foo</span><span class="p">()</span><span class="o">:</span>
         <span class="n">print</span> <span class="s">&quot;Bar!&quot;</span>
 </pre></div>
