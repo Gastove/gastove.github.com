@@ -33,51 +33,50 @@ dt2 <- dt[foo == 'a', list(col1, col2)]
 
 `data.table` documentation refers to this as `dt[i, j]` syntax; both `i` and `j` are full-blown expressions, evaluated at execution. Behavior can be problematic:
 
-```r
-dt[dt$foo == 'a'] # Returns exactly what you'd expect -- rows where dt$foo == 'a' evaluates to `TRUE`
-dt[dt$foo == 'a', ] # Also fine!
-dt[foo == 'a', 'bar'] # Returns... 'bar'! The string literal, 'bar'. Huzzah.
-```
+    #!r
+    dt[dt$foo == 'a'] # Returns exactly what you'd expect -- rows where dt$foo == 'a' evaluates to `TRUE`
+    dt[dt$foo == 'a', ] # Also fine!
+    dt[foo == 'a', 'bar'] # Returns... 'bar'! The string literal, 'bar'. Huzzah.
 
 So that's a mess, especially if you're modifying an existing subsetting operation. The flip side:
 
-```r
-# Subsetting by variable evaluation, the data.frame way:
-cond1 <- expression(df$foo == var1)
-cond2 <- expression(df$bar == var2)
-df2 <- df[eval(cond1) & eval(cond2), ]
+	#!r
+    # Subsetting by variable evaluation, the data.frame way:
+    cond1 <- expression(df$foo == var1)
+    cond2 <- expression(df$bar == var2)
+    df2 <- df[eval(cond1) & eval(cond2), ]
 
-# The data.table way
-dt2 <- dt[foo == var1 & bar == var2]
-```
+    # The data.table way
+    dt2 <- dt[foo == var1 & bar == var2]
+
 
 This is the advantage of `i` and `j` being expressions already -- you can simply put everything in place, variables and all, and it evaluates.
 
 Assigning new columns is where things really get good, but also... weird looking.
 
-```r
-# Assign a single new column
-dt[, new.col := mean(col1)]
+    #!r
+    # Assign a single new column
+    dt[, new.col := mean(col1)]
 
-# Multiple assigns at once
-dt[
-,
-':='(
-    new.col.1 = val1,
-    new.col.2 = val2
-    )
-]
+    # Multiple assigns at once
+    dt[
+    ,
+    ':='(
+        new.col.1 = val1,
+        new.col.2 = val2
+        )
+    ]
 
-# And the coup de grace, assign with aggregate, followed by merge on keys:
-dt[
-,
-':='(
-    new.col.1 = sum(col1),
-    new.col.2 = mean(col2)
-    )
-by=list(col1, col2)
-]
-```
+    # And the coup de grace, assign with aggregate, followed by merge on keys:
+    dt[
+    ,
+    ':='(
+        new.col.1 = sum(col1),
+        new.col.2 = mean(col2)
+        )
+    by=list(col1, col2)
+    ]
+
 
 You want a fast merge? Holy shit: `dt1[dt2]` will join on the keys of each `data.table`, and it will do it very fast (this is called `J()` in dt-parlance). Of course, both `data.table`s need their keys set, and new `data.table`s don't emerge from aggregation keyed. You can also do remarkably fast time series joins like this, but... well, that brings me to the part I really dislike:
 
