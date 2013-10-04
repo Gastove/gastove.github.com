@@ -51,4 +51,4 @@ GOOGLE_ANALYTICS = 'UA-43979937-2'
 DISQUS_SITENAME = 'veryodd'
 
 # Uncomment following line if you want document-relative URLs when developing
-RELATIVE_URLS = False
+RELATIVE_URLS = True
