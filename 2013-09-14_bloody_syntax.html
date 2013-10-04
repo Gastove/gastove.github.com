@@ -81,14 +81,22 @@ dt2 <span class="o">&lt;-</span> dt<span class="p">[</span>foo <span class="o">=
 
 
 <p><code>data.table</code> documentation refers to this as <code>dt[i, j]</code> syntax; both <code>i</code> and <code>j</code> are full-blown expressions, evaluated at execution. Behavior can be problematic:</p>
-<div class="highlight"><pre>dt<span class="p">[</span>dt<span class="o">$</span>foo <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="c1"># Returns exactly what you&#39;d expect -- rows where dt$foo == &#39;a&#39; evaluates to `TRUE`</span>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3</pre></div></td><td class="code"><div class="highlight"><pre>dt<span class="p">[</span>dt<span class="o">$</span>foo <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="c1"># Returns exactly what you&#39;d expect -- rows where dt$foo == &#39;a&#39; evaluates to `TRUE`</span>
 dt<span class="p">[</span>dt<span class="o">$</span>foo <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="p">]</span> <span class="c1"># Also fine!</span>
 dt<span class="p">[</span>foo <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="s">&#39;bar&#39;</span><span class="p">]</span> <span class="c1"># Returns... &#39;bar&#39;! The string literal, &#39;bar&#39;. Huzzah.</span>
 </pre></div>
-
+</td></tr></table>
 
 <p>So that's a mess, especially if you're modifying an existing subsetting operation. The flip side:</p>
-<div class="highlight"><pre><span class="c1"># Subsetting by variable evaluation, the data.frame way:</span>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
+2
+3
+4
+5
+6
+7</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># Subsetting by variable evaluation, the data.frame way:</span>
 cond1 <span class="o">&lt;-</span> expression<span class="p">(</span>df<span class="o">$</span>foo <span class="o">==</span> var1<span class="p">)</span>
 cond2 <span class="o">&lt;-</span> expression<span class="p">(</span>df<span class="o">$</span>bar <span class="o">==</span> var2<span class="p">)</span>
 df2 <span class="o">&lt;-</span> df<span class="p">[</span>eval<span class="p">(</span>cond1<span class="p">)</span> <span class="o">&amp;</span> eval<span class="p">(</span>cond2<span class="p">),</span> <span class="p">]</span>
@@ -96,11 +104,31 @@ df2 <span class="o">&lt;-</span> df<span class="p">[</span>eval<span class="p">(
 <span class="c1"># The data.table way</span>
 dt2 <span class="o">&lt;-</span> dt<span class="p">[</span>foo <span class="o">==</span> var1 <span class="o">&amp;</span> bar <span class="o">==</span> var2<span class="p">]</span>
 </pre></div>
-
+</td></tr></table>
 
 <p>This is the advantage of <code>i</code> and <code>j</code> being expressions already -- you can simply put everything in place, variables and all, and it evaluates.</p>
 <p>Assigning new columns is where things really get good, but also... weird looking.</p>
-<div class="highlight"><pre><span class="c1"># Assign a single new column</span>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># Assign a single new column</span>
 dt<span class="p">[,</span> new.col <span class="o">:=</span> mean<span class="p">(</span>col1<span class="p">)]</span>
 
 <span class="c1"># Multiple assigns at once</span>
@@ -122,7 +150,7 @@ dt<span class="p">[</span>
 by<span class="o">=</span>list<span class="p">(</span>col1<span class="p">,</span> col2<span class="p">)</span>
 <span class="p">]</span>
 </pre></div>
-
+</td></tr></table>
 
 <p>You want a fast merge? Holy shit: <code>dt1[dt2]</code> will join on the keys of each <code>data.table</code>, and it will do it very fast (this is called <code>J()</code> in dt-parlance). Of course, both <code>data.table</code>s need their keys set, and new <code>data.table</code>s don't emerge from aggregation keyed. You can also do remarkably fast time series joins like this, but... well, that brings me to the part I really dislike:</p>
 <p>The syntax of <code>data.table</code> looks nothing like the syntax of anything else in R -- a problem not aided by the extreme heterogeneity of the entire 3rd Party package ecosystem. Everybody has their own notion of how a particular computation should be executed, which destroys conceptual portability. Once you finally get your brain around the <code>apply</code> family of methods, you get to wrap your brain around <code>plyr</code>; once you grok <code>plyr</code>, you'll be delighted to learn that nothing you know transfers to <code>data.table</code>. It becomes somewhat mandatory to get to know the underpinnings of each set of functions; <code>plyr</code>, for instance, is preferable to me for CPU-intensive tasks because it can be easily parallelized, while <code>data.table</code> is the clear winner for memory-bound tasks. Circling properly back to <code>data.table</code>, one gets the feeling that there's some truly blackbelt stuff to be done if you can just figure out <em>how</em>. For instance: <code>dt[J()][i, j][i, mult='first'][j=list(a, b,</code>:=<code>(new1 = expr1, new2:= expr2)), roll=T]</code> is, as near as I can tell, entirely legal -- each processed <code>data.table</code> passing directly into the next set of calls. As a Scala developer, I get this; as somebody whose spent time trying to figure it out, I've still got no idea what <code>roll</code> really does, or why I'd want to use it.</p>
