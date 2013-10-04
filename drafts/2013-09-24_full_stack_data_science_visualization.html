@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet/less" type="text/css" href="../theme/css/style.less">
+  <script src="../theme/js/less-1.3.3.min.js" type="text/javascript"></script>
+  <!-- <link rel="stylesheet" type="text/css" href="../theme/css/style.css"> -->
+
+  <link rel="stylesheet" type="text/css" href="../theme/css/pygments.css">
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono">
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width; initial-scale=1.0">
+  <meta name="author" content="Ross Donaldson">
+  <meta name="description" content="Posts and writings by Ross Donaldson">
+
+    
+  <meta name="keywords" content="">
+
+  <title>
+    Full Stack Data Science: Visualization Tools Edition  </title>
+
+  <script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-43979937-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="..">
+                <img src="http://www.gravatar.com/avatar/a942cea13e537bb0ea754b6d216c3377?size=160" alt="logo">
+              </a>
+      <h2><a href="..">Ross Donaldson</a></h2>
+      <p></p>
+      <ul>
+                                <li><a href="http://www.gastove.com" target="_blank">Home</a></li>
+                <li><a href="http://food.gastove.com/" target="_blank">Food</a></li>
+                        <li><a href="http://www.twitter.com/Gastove" target="_blank">Twitter</a></li>
+                <li><a href="http://www.github.com/Gastove" target="_blank">Github</a></li>
+              </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <p><a href="..">Index</a> &#124; <a href="../archives.html">Archives</a> &#124; Posted on Tue, Sep 24 2013</p>
+    </header>
+
+    <article>
+  <div id="article_title">
+    <h3><a href="../2013-09-24_full_stack_data_science_visualization.html">Full Stack Data Science: Visualization Tools Edition</a></h3>
+  </div>
+  <div id="article_text">
+    <p>I work in idiosyncratic ways. Truthfully, it's not something I've done on purpose. In my career so far, the weird way has often also been the way I could get what I want to get done the fastest. <em>Exemplus gratis</em>: when I realized a need to access data in a data warehouse hosted by my company's parent company, I had roughly these choices:</p>
+<ol>
+<li>Be told, very firmly, I was doing it wrong.</li>
+<li>Be told what I needed to do was pretty much impossible without a Windows machine<sup id="fnref:win"><a class="footnote-ref" href="#fn:win" rel="footnote">2</a></sup>.</li>
+<li>Teach my R server how to spin up a tiny JVM, load in the JDBC drivers for the data warehouse in question, and use R as my Netezza frontend, by way of emacs.</li>
+</ol>
+<p>So obviously I went with number three; I always go with number three. Any time I'm told "that can't be done" or "we'll need to get the budget for more resources" or "you can't get there from here!", I have this one-two punch of pathological disbelief and obstinate, defiant "Oh yeah, watch me!" The upside is my reputation for Getting Tricky Crap Done. The downside is... well.</p>
+<p>The downside is the vast and not always easy to perceive set of problems that come with being the only person who knows the tools they use. I have no code reviews. Nobody can check my work. I doubt anybody else could <em>use</em> my work if they had to -- it's highly non-transferable, which raises (for me, anyways) some very uncomfortable questions about efficiency and information gatekeeping. Perhaps the problem I deal with the most regularly is this: how do I share my work?</p>
+<p>Lets consider a common use case:</p>
+<p>Me: "Hey boss, I have the Visualization you asked for."
+Boss: "Terrific. Can you send me the Excel sheet? I want to pivot this."</p>
+<p>Did you know you can get an Android widget that just plays the Sad Trombone? I have it. I keep it around for times like this. <strong>wop-wah</strong> Because there is no Excel sheet -- of course there isn't. For two reasons: 1. Typically I load data in to R; once there, <code>ggplot2</code> makes a billion times more sense than Excel; 2. I can barely use Excel. Like barely. At all. Seriously.</p>
+<p>This post actually started from my desire to write a grudging and eventual indictment of Excel -- but the farther I got with that line of thinking, the more I realized I was writing about a separate-but-related problem -- or maybe two problems, really. The first I'll call Data Stories. The second I'm calling either Cognitive Load or Conceptual Schism. We'll see which one sticks.</p>
+<h3>Data Stories</h3>
+<p>Information is data made relevant. The only analysis I ever want to do is analysis that informs a decision or enables action; for that to be true, an analysis has to result in the production of information. A visualization tells a story about information that conveys data -- and the data is still there in the background. I particularly value working in places with a culture of data -- a place where people are accustomed to asking questions about what the information <em>is</em>, where the data <em>came from</em>, and can they see it for themselves? This leads me to believe, pretty firmly, that if you are producing a report on a topic, the data is as much a part of that report as the polished visualizations are.<sup id="fnref:dataexcep"><a class="footnote-ref" href="#fn:dataexcep" rel="footnote">3</a></sup> Not everybody will want to get up to their elbows in the data, but everybody should have the choice.</p>
+<p>This conviction leads, frankly, to some pretty awkward money-where-my-mouth-is moments, particularly when it comes time to build a report. After all, this is the gotcha of Excel (which I loathe): <em>almost everybody</em> can open an Excel document, somehow; they can see the calculations, manipulate the charts. You can add your source SQL in blocks of text, which is an unweildy way to be transparent <em>but it works</em>. Perhaps most importantly, your information is delivered with the data that backs it, in a format you don't have to be any kind of hacker/dev/data scientist to open and look at.</p>
+<p>Of course, if you're anything like me, you also run head-long in to this problem: the code is data too.<sup id="fnref:codeisdata"><a class="footnote-ref" href="#fn:codeisdata" rel="footnote">4</a></sup> The logical extension of code being data is code being inextricable from the information you've been generating -- in the same way a skeleton is inextricable from a human, code is the framework that holds up the report, the data makes it vital and living. Caveat: the skeleton metaphor extends a step further. Most of the time, you don't meet a person and fuss over their skeleton. For the vast majority of your audience, code may well be noise, and should be included in a way that doesn't knock people out of your data story.</p>
+<p>So how do you include the code?</p>
+<h3>Conceptual Schism</h3>
+<p>This is really the idea that got me started on this tear in the first place. It's the breakdown between domain knowledge and product knowledge -- in this specific case, the difference between doing the work of <em>building</em> the story and doing the work of <em>packaging</em> it. It goes something like this:</p>
+<blockquote>
+<p>Data work has a core set of skills that are conceptually alike. Computer science, coding, statistics, data visualization: these are all rigorous skills that I find highly inter-operable and a little synergistic (becoming a better computer scientist improves more than just my grasp of computer science). These tasks work the same parts of my brain. When it comes time to package up a report, I suddenly pull out Excel or Tableau -- tools that assume you have some base data you want to load and show. They have as little in common with each other as they do with the work of generating that base data, and being good at Excel or Tableau has <em>no relationship</em>, conceptually or otherwise, with being good at data or data visualization or computers at all.</p>
+</blockquote>
+<p>This problem permeates down into some pretty core data tools. SAS and SPSS each have their own ways they want you to work, which are different from Matlab or Octave. While R has a proud, mostly-internally-consistent heart, every R package operates on a completely different set of design metaphors that every other package.<sup id="fnref:rpkg"><a class="footnote-ref" href="#fn:rpkg" rel="footnote">5</a></sup> The upside is that it's all programming; the downside is having to learn something thorny and new to speed up already difficult tasks. Tools like Excel or Tableau are even worse, operating on design metaphors that don't make an elegant conceptual transition from slogging about in code. What could be better, after all, than completing your exploratory analysis, getting all geared up to do your full analysis, and... taking a big step back to completely re-invent your process to make it jive with a totally different level of abstraction needed to pull the data into a different visualization framework!</p>
+<p>Maybe snakes. Snakes would be better.</p>
+<h3>The Use Case</h3>
+<p>What's the point? What's the core need? What would the <em>perfect</em> thing look like? I think:</p>
+<ol>
+<li><strong>Portable</strong>: We need to deliver information to people; that means it needs to be easy to open, with as little specialized software as possible. No skill should be required to <em>view</em> your report.</li>
+<li><strong>Self-Serve</strong>: The best thing is when you can put out the birdfeeder and let the birds feed themselves. Generating a report is good; generating a report that self-updates is better. Generating a self-updating report that other people understand how to get what they need from? Fan-damn-tastic.</li>
+<li><strong>Parts-complete</strong>: The report should package together source data, process, code, final data set, prose, figures -- the whole works. It should do so without the wrong parts getting in the way at the wrong time.</li>
+<li><strong>Transparent</strong>: I mean something slightly subtle here: a report should capture everything it took to make the report. The amount of baked-in tacit knowledge should be very low.</li>
+<li><strong>Powerful</strong>: We as data workers have tremendous capacities for imagination, insight, analysis, comprehension; we should be able to fully express ourselves.</li>
+</ol>
+<h3>And now, some reporting options</h3>
+<h4>Excel</h4>
+<p>This is sort of the default for presenting some kind of data. If you're anything like me, you grew up with Excel in the classroom, typing in your physics homework or making charts about the GDP of Zambia.<sup id="fnref:zambia"><a class="footnote-ref" href="#fn:zambia" rel="footnote">6</a></sup> We all know this is true: Excel was never intended for two thirds of the nonsense it's used for. Excel is for Spreadsheets. Keeping ledgers. Light-weight analysis like marginal sums. Nothing like what it's used for.</p>
+<p>I've touched on the upsides all ready: Excel is everywhere. Excel has become the <em>lingua franca</em> of passing around data to anybody who might want to mess with that data themselves. Excel is the go-to for reports at my current company -- we email Excel files out daily, upload them to servers, distribute them far and wide. I'm both stunned and horrified at the ways I've seen people make Excel dance -- from interactive event schedules to self-regenerating pivot tables, so many occult bolt-ons have been added to Excel that very few people can tell you what, specifically, Excel is <em>for</em>. It's a hammer; everything is nails.</p>
+<p>The thing is: Excel is actually a hammer a la <a href="http://www.codinghorror.com/blog/2012/06/the-php-singularity.html">PHP</a>. In precisely the same way as PHP, it has come to be ubiquitous in the work of data. Consider the problem of the Excel daily dashboard:</p>
+<p>You need to send out a daily report for people who want to monitor the pulse of a project. They need to be able to access all your data, fiddle with it, so you build the report in Excel. This works pretty well! Wait, now you need to add something -- well you can just visualize that right in one of the tabs! Perfect. Oh hey, an extra column needs adding, and another -- oh god, did we just change formats on the regular reporting email? Oh hey, you're going on leave? Quick. Teach so-and-so about your reports. It will take a week; it will not be about analysis or data. It will be about how you make Excel dance.</p>
+<p>Excel dashboards spiral quickly out of control; they become these living, breathing entities packed with tacit knowledge, and that tacit knowledge is <em>very difficult</em> to discern from looking at a monolithic Excel document. Code can be just as occult and inaccessible, sure, but there are also best practices that we as developers embrace to try and make our code clear, and those patterns are difficult to embrace in Excel, I think.</p>
+<p>And lets not even <em>start</em> on all the ways Excel is a fail for those of us who like open source software.</p>
+<h4>Tableau</h4>
+<p>This one I have seriously mixed feelings about.</p>
+<p>Tableau has the obvious advantage of being purpose built -- and recently -- for the job of doing analysis that shows data. It contains an incredibly powerful engine for getting this job done. Tableau can ingest structured data from almost anything; it can connect to a living data store and update your work as you go, or ingest a SQL statement and load that data locally to dramatically increase analysis speed. Once you're happy with your work, you can publish it to a server, view-able by anybody with the right license.</p>
+<p>And the right browser.</p>
+<p>On a PC.</p>
+<p>Okay, so the wheels kinda just came off, but it's ok, we got this. Have you <em>seen</em> the number of ways Tableau will let you visualize your data? It's completely unreal. You can aggregate, write eloquent equations, add hierarchies and subcategories and groups -- all of which immediately make your data not just explored but explore-able. By other people. You do the work, Tableau bakes in this heady magic that allows other people to wander interactively through your creation. Want to be able to quickly filter your data to show different cohorts? Built-in. Wanna make a dashboard? It's done. Seriously.</p>
+<p>And yet.</p>
+<p>We just clipped by major beef number one: magic. There's a <strong>lot</strong> of magic. It's everywhere. You poke a button and stuff just <em>happens</em> and it can be completely bewildering and what the hell just happened to my OH GOD WHAT IS THAT? This is an analytics tool with a prominent "back" button. Because you'd never, ever keep your sanity without one. This can be a challenge for somebody accustomed to the <em>Grammar of Graphics</em> approach of <code>ggplot2</code>; I expect to take a step and then another step and build up my visualization in layers. Tableau expects me to explore and visualize at the same time, moving through this stack of visualizations I try on like sweaters.</p>
+<p><em>And it recommends the sweaters</em>.<sup id="fnref:beef"><a class="footnote-ref" href="#fn:beef" rel="footnote">1</a></sup> Immensely jarring is the experience of adding another piece to your visualization and watching in dismay as the recommendation engine takes over and everything becomes horribly different. This is a perfectly distinct question from whether or not the recommendations are any good; it's about the wrenching cognitive cost of suddenly trying to decipher something that is entirely other than what you intended or expected.</p>
+<p>Have I mentioned that the licenses are hideously expensive? Tableau 8 is changing some of the OS requirements, thank heavens, but this stuff is... an investment, both in money and, frankly, in time. As somebody with a great deal of <em>intention</em> about his work, I'm accustomed to simply writing lines of code that describe what I'd like to see and then adjusting my declarations as needed. Tableau is a different skill. It speaks an entirely different language than the rest of my work. Have I made something excellent in R or Python? Well, that's terrible -- it wont transfer. Sure, I could write my stuff out to a CSV, but Tableau sits on live data! The value of not having to re-run a report is very, very high; I'm not yet sure if it's worth the cost of Tableau.</p>
+<h4>Sweave and IPython Notebooks</h4>
+<p>Oh darling, darling these things. They are built for me to like them; this is bad news.</p>
+<p><a href="http://www.stat.uni-muenchen.de/~leisch/Sweave/">Sweave</a> and <a href="http://ipython.org/notebook.html">IPython Notebooks</a> do roughly the same thing -- that is, they are both ways of writing a document that is code, prose, and code output all together in one place. The implementation details vary; Sweave is for R and builds mostly to LaTeX, while IPN is for (gasp!) Python and is mostly web hosted. The basic gist is uniform: write code, evaluate code, write prose in prose blocks and place code output, compile all together, lead a happy life. I think I'm in love with IPN; I think Sweave might be the best reason I've found to stick with R.</p>
+<p>It can't last.</p>
+<p>They've got their strengths. The most overt, for me, is that they heal the Conceptual Schism. You aren't just building your report or visualization in the same language as your analysis, you're building the whole thing <em>at the same time</em>. It's full stack, consistent from start to end. This makes it beautifully transparent; all the data is captured, as well as the knowledge of how to make the report. Both, actually, are vastly more portable than Excel <em>or</em> Tableau. (LaTeX compiles to PDF; IPN serves a web client that requires no plugins.)</p>
+<p>Let's codify the bad news. Let's do it with bullet points:</p>
+<ul>
+<li>These tools? Not sexy. Frequently, not glossy. LaTeX is more or less the gold standard for typesetting mathematics, but beyond that, there's none of the full-color-GUI <em>snap</em> of Tableau or the familiarity (often called "trust") of Excel.</li>
+<li>So far, IPN is deeply good for sharing analytics work with other analysts and not really ideal for sharing reports with people for whom the code isn't first-order information. This can probably be worked around, but it's not the dominant paradigm it was designed for. (If anybody knows of awesome things that prove me wrong on this, oh man, post 'em here.)</li>
+<li>Sweave makes PDFs; that means something that must be downloaded and opened by anybody interested. I feel fine about this, but it's not typically a stand-alone solution. True, Sweave means LaTeX means htmlatex means just use it to typeset an email, hey? Now your email is a zillion pages long and <em>can't</em> be downloaded. Awesome.
+** Also, with Sweave... you still have to use R. My thoughts on R really deserve their own post; for now, I'll use a footnote.<sup id="fnref:r"><a class="footnote-ref" href="#fn:r" rel="footnote">7</a></sup></li>
+<li>Any prayer of interactivity is not... here. This is not self-serve. This is not something your boss will take and play with. Sweave at least captures how you <em>got</em> the data; IPN does bake everything in, but there's no "download this data as a CSV" facility unless you make one.</li>
+</ul>
+<p>So. That's... a thing.</p>
+<h4>Homebrewed Roll-yer-own Reportfest</h4>
+<p>This is actually an option and it works. It works about as well as your servers and your databases and whoever you have implementing the code.</p>
+<p>Right? Right.</p>
+<p>This option is hard. It has some advantages. It works best for regular, daily-dashboard-style reporting, if you're in to that kind of thing. You can, for example, create python scripts that run on a cron job, compile an email, and send it to you for processing Some How Or Another. Depending on your sophistication with python or R, those scripts could generate charts and everything. Maybe the script is actually server code -- a controller plus models, or a service or a module, depending on your particular server idiom. Maybe you have a dedicated analytics DB you can hit? Yeah, I thought not.</p>
+<p>This option is both very good and very tricky. It supplements things well; we've had marvelous success with an automated-email-plus-analyst approach. You could automated IPN or Sweave, if you felt like it. Or, you could whole-hog on d3.js and just script up self-serve webpages, if you have some sort of internal portal or admin tool.</p>
+<p>This can be the best option and the very, very worst. Given the cost, I'm leery of it; it takes a <em>lot</em> of time to set up something like this and to do it well, and once it's done it seldom gets maintained. Besides -- whose perview is it? The server code is the domain of the engineers, but numbers fall under the analysts. Who commits bug fixes, and how are they prioritized? Be wary of this. It can get messy.</p>
+<h3>Conclusion</h3>
+<p>The whole problem with this is that I haven't really concluded anything, myself. There are some powerful tools; they all have problems. Maybe a problem I haven't taken seriously enough is, "are you employing an analyst or a data scientist?" Perhaps it's conceptually jarring for me to emerge from the cave of code into the brightly lit GUI of Tableau in a way it simply wouldn't be for somebody who didn't identify like I do. Perhaps there is a class of professionals for whom Tableau is a remarkable and powerful tool -- one to be incorporated into their professional toolbox as Python and R are incorporated in to mine.</p>
+<p>Meanwhile, I still have to get my work done.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:beef">
+<p>Major Beef No. 2 for you beef counters at home.&#160;<a class="footnote-backref" href="#fnref:beef" rev="footnote" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+<li id="fn:win">
+<p>And let me be frank about this: no thanks.&#160;<a class="footnote-backref" href="#fnref:win" rev="footnote" title="Jump back to footnote 2 in the text">&#8617;</a></p>
+</li>
+<li id="fn:dataexcep">
+<p>There are exceptions; regular reporting and dashboards, for instance, should expose their data with the understanding that once it's been vetted and questioned once it probably wont be poked at every single time the dashboard goes out.&#160;<a class="footnote-backref" href="#fnref:dataexcep" rev="footnote" title="Jump back to footnote 3 in the text">&#8617;</a></p>
+</li>
+<li id="fn:codeisdata">
+<p>Yes it is. If anybody tells you different, they are wrong.&#160;<a class="footnote-backref" href="#fnref:codeisdata" rev="footnote" title="Jump back to footnote 4 in the text">&#8617;</a></p>
+</li>
+<li id="fn:rpkg">
+<p>You can try and do without packages, but that overlooks a huge amount of very good work that will save you important amounts of time -- if you can just figure out how the f%&amp;$! they work.&#160;<a class="footnote-backref" href="#fnref:rpkg" rev="footnote" title="Jump back to footnote 5 in the text">&#8617;</a></p>
+</li>
+<li id="fn:zambia">
+<p>Which was totally a place when I wrote a report about it.&#160;<a class="footnote-backref" href="#fnref:zambia" rev="footnote" title="Jump back to footnote 6 in the text">&#8617;</a></p>
+</li>
+<li id="fn:r">
+<p>Buried deep inside R is the proudly beating heart of an awesome domain-specific language -- but it's buried pretty deep. I find that I haven't been able to divorce myself from using packages; they overcome many of R's built-in shortcomings, like copying huge datasets over and over again. But R has a hideous syntax, and the packages, in their desire to 'fix' the problems inherited from R itself, often implement New and Different operational paradigms, syntax, and assorted nonsense. The result is that R is profoundly hard to share with non-R programmers in a way simply not true of something like Python. More and more, I'm considering that to be an important and crippling flaw.&#160;<a class="footnote-backref" href="#fnref:r" rev="footnote" title="Jump back to footnote 7 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+  </div>
+  <div id="article_meta">
+    <p>Category: <a href="../category/.html"></a></p>
+        <p>Tags:
+            <a href="../tag/.html"></a>          </p>
+          </div>
+
+  
+</article>
+
+    <footer>
+      <p><a href="../" class="button_accent">&larr; Back to Index</a></p>
+<script language="javascript">
+    function toggleComments() {
+        var commentDiv = document.getElementById("article_comments");
+        (commentDiv.style.display == "none") ? commentDiv.style.display = "block" : commentDiv.style.display = "none";
+        return false;
+    }
+</script>
+    </footer>
+
+    <div id="ending_message">
+      <p>&copy Ross Donaldson. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/giulivo/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+  </body>
+</html>
