@@ -18,7 +18,7 @@
   <meta name="keywords" content="rstats, data.table, standards, data science">
 
   <title>
-    Bloody Syntax: Standardizing on `data.table` in R  </title>
+    Syntax Syntax Syntax: Standardizing on `data.table` in R  </title>
 
   <script type="text/javascript">
   var _gaq = _gaq || [];
@@ -57,16 +57,21 @@
 
     <article>
   <div id="article_title">
-    <h3><a href="./2013-09-14_bloody_syntax.html">Bloody Syntax: Standardizing on `data.table` in R</a></h3>
+    <h3><a href="./2013-09-14_bloody_syntax.html">Syntax Syntax Syntax: Standardizing on `data.table` in R</a></h3>
   </div>
   <div id="article_text">
-    <p>The amount of data in my work, like so many things, creeps. I show a chart of five things, people ask for the other six. I show two weeks of history, I'm asked for four more. I instrument a feature and then it's deployed on six new platforms and how's it performing, for all 11 things, with six weeks of history?</p>
+    <p><strong>Update</strong> The creator of <code>data.table</code>, Matthew Dowle, found this post and took the time to do some thorough commenting. You should read our discussion below; you should also be aware that I've updated the article. I'm doing two things:</p>
+<ol>
+<li>Making a clearer separation between my feelings of "ARGH, R Syntax" and what I think of <code>data.table</code>'s syntax.</li>
+<li>Corrected a couple of syntax errors.</li>
+</ol>
+<p>The amount of data in my work, like so many things, creeps. I show a chart of five things, people ask for the other six. I show two weeks of history, I'm asked for four more. I instrument a feature and then it's deployed on six new platforms and how's it performing, for all 11 things, with six weeks of history?</p>
 <p>There's plenty of good news. Conceptually, processing two gigabytes of data isn't any different than processing one; doubling the amount of history displayed in a chart raises questions of clarity and data display, but on its face, little else. With... one or two exceptions, all of which have to do with performance. This bites you from two places:</p>
 <ol>
 <li>The Data Store: unless you're working with something like Hadoop, it's unlikely you'll be able to do much cleanup on your data before it leaves the datastore. MySQL lacks... basically everything you could ever want, and probably can't perform meaningful aggregations in MySQL anyways. The latest version of Hive supports windowing functions, which can -- broadly speaking -- be used for outlier cleanup. Me personally? I'm not on the latest version. Conclusion: data must be aggregated after the dataset is pulled.</li>
-<li>Development: do you work in R? I sure do. Did you know that R can't think about anything it can't hold in active memory? No paging, cool as paging is, and object serialization can, frankly, be a pain in the arse. A cool side-effect of R's memory limit is that there's only one R Session process, and <em>that</em> process is limited by system architecture. A 32-bit system can only allocate four-gigabytes-ish of memory, minus whatever the OS itself uses (maybe up to a gig?). Now, suddenly, you have a maximum total workspace for all objects and processes of... about three gigabytes. It's amazing how fast that goes away.</li>
+<li>Development: do you work in R? I sure do. Did you know that R can't think about anything it can't hold in active memory? No paging, cool as paging is, and object serialization can, frankly, be a pain in the arse. A side-effect of R's memory limit is that there's only one R Session process, and <em>that</em> process is limited by system architecture. A 32-bit system can only allocate four-gigabytes-ish of memory, minus whatever the OS itself uses (maybe up to a gig?). Now, suddenly, you have a maximum total workspace for all objects and processes of... about three gigabytes. It's amazing how fast that goes away. If you're lucky, you've got a 64-bit architecture (which R will fully support) and gobs of RAM. If you're me, you have the former and pine for the latter.</li>
 </ol>
-<p>So! Time to crunch a file that occupies 1.2gb on disk. Many R operations -- especially those on data.frames -- create full copies of the source data as they act on them. This is a pernicious problem; data frames are ubiquitous, and incredibly useful. For instance: much as I love <a href="http://plyr.had.co.nz/">plyr</a>, memory efficient... it is not, especially if you want to parallelize the operation across more than one processor core. Now what do you do?</p>
+<p>So! Time to crunch a file that occupies 1.2gb on disk. Many R operations -- especially those on <code>data.frames</code> -- create full copies of the source data as they act on them. This is a pernicious problem; <code>data.frame</code>s are ubiquitous, and incredibly useful -- partly for the expressive power of a columnar data structure, and partly for the rich set of tools developed specifically to act on <code>data.frame</code>s. Few of those tools solve the memory issue, alas. (For instance: much as I love <a href="http://plyr.had.co.nz/">plyr</a>, memory efficient... it is not, especially if you want to parallelize the operation across more than one processor core.) Now what do you do?</p>
 <p>My answer is <a href="http://datatable.r-forge.r-project.org/">data.table</a>. Let's start with some good news:</p>
 <ol>
 <li><code>data.table</code> is fast. I wont reproduce the timing tables from the manual, but the web page asserts: 10+ times faster than <code>tapply()</code>; 100+ times faster than <code>==</code>; 500+ times faster than <code>DF[i,j]&lt;-v alue</code>. So far, in terms of speed, it's everything I've ever dreamed of and a bag of chips.</li>
@@ -76,11 +81,11 @@
 <p>Let's dwell on that last one for a moment. <code>data.table</code> is nice because it gives you exceptionally brisk versions of many of your favorite <code>data.frame</code> operations -- like <code>summary</code>. <code>subset</code> is implemented for <code>data.table</code>, that's nice. But if you're like me and write functions that ingest <code>data.frames</code>, you're in for a little heartache.</p>
 <p>Take subsetting. In a <code>data.frame</code>, you might do something like <code>df2 &lt;- df[df$foo == 'a', ]</code> -- or, to go by rows and columns, <code>df2 &lt;- df[df$foo == 'a', c('col1', 'col2')]</code>. This metaphor is familiar to R; first, we evaluate true/false on all the rows, then we return all the rows that evaluate true, subsetted by a vector of quoted column names. But in a <code>data.table</code>, things fly a little different: first we set a <code>key</code>, and the <code>data.table</code> sorts itself by that key. Then, we pass an expression:</p>
 <div class="highlight"><pre>setkey<span class="p">(</span>dt<span class="p">,</span> <span class="s">&#39;foo&#39;</span><span class="p">)</span>
-dt2 <span class="o">&lt;-</span> dt<span class="p">[</span>foo <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">,</span> list<span class="p">(</span>col1<span class="p">,</span> col2<span class="p">)]</span>
+dt2 <span class="o">&lt;-</span> dt<span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span> list<span class="p">(</span>col1<span class="p">,</span> col2<span class="p">)]</span>
 </pre></div>
 
 
-<p><code>data.table</code> documentation refers to this as <code>dt[i, j]</code> syntax; both <code>i</code> and <code>j</code> are full-blown expressions, evaluated at execution. Behavior can be problematic:</p>
+<p><code>data.table</code> documentation refers to this as <code>dt[i, j]</code> syntax; both <code>i</code> and <code>j</code> are full-blown expressions, evaluated at execution. Behavior can be... problematic, in terms of what you'd expect from a <code>data.frame</code>:</p>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3</pre></div></td><td class="code"><div class="highlight"><pre>dt<span class="p">[</span>dt<span class="o">$</span>foo <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="c1"># Returns exactly what you&#39;d expect -- rows where dt$foo == &#39;a&#39; evaluates to `TRUE`</span>
@@ -89,7 +94,8 @@ dt<span class="p">[</span>foo <span class="o">==</span> <span class="s">&#39;a&#
 </pre></div>
 </td></tr></table>
 
-<p>So that's a mess, especially if you're modifying an existing subsetting operation. The flip side:</p>
+<p>So that's a mess, especially if you're passing a <code>data.table</code> in to a function that was written for a <code>data.frame</code>. As Matthew Dowle points out in the comments, this behavior <em>is</em> core to <code>data.table</code>, and is discussed extensively in the documentation; that's a damn fine point. The counter point is that calling <code>dt[foo == 'a', 'bar']</code> <em>doesn't fail</em>, even though what it returns is not likely to be useful as a result. While you're in the process of learning to think <code>data.table</code>, this can be a headache -- and I'd encourage anybody making the switch to start debugging with the question, "am I subsetting the right way?"</p>
+<p>Now, there is, of course, a bright side, and very bright it is:</p>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>1
 2
 3
@@ -102,11 +108,11 @@ cond2 <span class="o">&lt;-</span> expression<span class="p">(</span>df<span cla
 df2 <span class="o">&lt;-</span> df<span class="p">[</span>eval<span class="p">(</span>cond1<span class="p">)</span> <span class="o">&amp;</span> eval<span class="p">(</span>cond2<span class="p">),</span> <span class="p">]</span>
 
 <span class="c1"># The data.table way</span>
-dt2 <span class="o">&lt;-</span> dt<span class="p">[</span>foo <span class="o">==</span> var1 <span class="o">&amp;</span> bar <span class="o">==</span> var2<span class="p">]</span>
+dt2 <span class="o">&lt;-</span> dt<span class="p">[</span>J<span class="p">(</span>var1<span class="p">,</span> var2<span class="p">)]</span>
 </pre></div>
 </td></tr></table>
 
-<p>This is the advantage of <code>i</code> and <code>j</code> being expressions already -- you can simply put everything in place, variables and all, and it evaluates.</p>
+<p>This is the advantage of <code>i</code> and <code>j</code> being expressions already -- you can simply put everything in place, variables and all, and it evaluates. Further, <code>data.table</code> implements binary search on its keys; this makes for a speed increase over <code>data.frame</code> that will make your heart sing. And honestly, we aren't done with the good news.</p>
 <p>Assigning new columns is where things really get good, but also... weird looking.</p>
 <table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 1
  2
@@ -128,7 +134,13 @@ dt2 <span class="o">&lt;-</span> dt<span class="p">[</span>foo <span class="o">=
 18
 19
 20
-21</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># Assign a single new column</span>
+21
+22
+23
+24
+25
+26
+27</pre></div></td><td class="code"><div class="highlight"><pre><span class="c1"># Assign a single new column</span>
 dt<span class="p">[,</span> new.col <span class="o">:=</span> mean<span class="p">(</span>col1<span class="p">)]</span>
 
 <span class="c1"># Multiple assigns at once</span>
@@ -149,12 +161,34 @@ dt<span class="p">[</span>
     <span class="p">)</span>
 by<span class="o">=</span>list<span class="p">(</span>col1<span class="p">,</span> col2<span class="p">)</span>
 <span class="p">]</span>
+
+<span class="c1"># Dowle points out there&#39;s a vastly clearer syntax available! Much nicer:</span>
+dt<span class="p">[</span>
+list<span class="p">(</span>new.col.1<span class="p">,</span> new.col2<span class="p">)</span> <span class="o">:=</span> list<span class="p">(</span>sum<span class="p">(</span>col1<span class="p">),</span> mean<span class="p">(</span>col2<span class="p">))</span>
+<span class="p">,</span> by <span class="o">=</span> group
+<span class="p">]</span>
 </pre></div>
 </td></tr></table>
 
 <p>You want a fast merge? Holy shit: <code>dt1[dt2]</code> will join on the keys of each <code>data.table</code>, and it will do it very fast (this is called <code>J()</code> in dt-parlance). Of course, both <code>data.table</code>s need their keys set, and new <code>data.table</code>s don't emerge from aggregation keyed. You can also do remarkably fast time series joins like this, but... well, that brings me to the part I really dislike:</p>
-<p>The syntax of <code>data.table</code> looks nothing like the syntax of anything else in R -- a problem not aided by the extreme heterogeneity of the entire 3rd Party package ecosystem. Everybody has their own notion of how a particular computation should be executed, which destroys conceptual portability. Once you finally get your brain around the <code>apply</code> family of methods, you get to wrap your brain around <code>plyr</code>; once you grok <code>plyr</code>, you'll be delighted to learn that nothing you know transfers to <code>data.table</code>. It becomes somewhat mandatory to get to know the underpinnings of each set of functions; <code>plyr</code>, for instance, is preferable to me for CPU-intensive tasks because it can be easily parallelized, while <code>data.table</code> is the clear winner for memory-bound tasks. Circling properly back to <code>data.table</code>, one gets the feeling that there's some truly blackbelt stuff to be done if you can just figure out <em>how</em>. For instance: <code>dt[J()][i, j][i, mult='first'][j=list(a, b,</code>:=<code>(new1 = expr1, new2:= expr2)), roll=T]</code> is, as near as I can tell, entirely legal -- each processed <code>data.table</code> passing directly into the next set of calls. As a Scala developer, I get this; as somebody whose spent time trying to figure it out, I've still got no idea what <code>roll</code> really does, or why I'd want to use it.</p>
-<p>In conclusion: <code>data.tables</code>. Unbearably good for what they're good for, if you can ever figure out how to do it.</p>
+<p>The syntax of <code>data.table</code> looks nothing like the syntax of anything else I regularly use in R -- a problem not aided by the extreme heterogeneity of the entire 3rd Party package ecosystem. Now: Mr. Dowle is quick to point out that <code>data.table</code> is inspired by the <code>A[B]</code> syntax of matrices, which is from <code>base</code>, and he's right. I feel a little odd admitting this: I'm not sure I've used a matrix in R yet, and so to me this syntax was new. In some sense, though, that's not really the point. The point is something I should write a clear, focused, single-purpose post about. The short version is this: Everybody has their own notion of how a particular computation should be executed, which destroys conceptual portability. Once you finally get your brain around the <code>apply</code> family of methods, you get to wrap your brain around <code>plyr</code>; once you grok <code>plyr</code>, you'll be delighted to learn that nothing you know transfers to <code>data.table</code>, and neither <code>data.table</code> nor <code>plyr</code> have anything to do with <code>ggplot2</code>. It becomes somewhat mandatory to get to know the underpinnings of each set of functions; <code>plyr</code>, for instance, is preferable to me for CPU-intensive tasks because it can be easily parallelized, while <code>data.table</code> is the clear winner for memory-bound tasks. The footprint of R as a language is messy. I'm still trying to sort through how much of a problem I think that really is, but I'm leaning towards "pretty big."</p>
+<p>Circling properly back to <code>data.table</code>: one gets the feeling that there's some truly blackbelt stuff to be done if you can just figure out <em>how</em>.<sup id="fnref:redacted"><a class="footnote-ref" href="#fn:redacted" rel="footnote">1</a></sup> For instance: <code>data.table</code> is capable of powerful time-series joins, which I still don't grok, and you can chain subsetting calls using the form <code>dt[i, j][i, j, by=foo][i, j, with=F, roll=T]</code> -- each resulting subset is passed directly in to the following command. As a Scala developer, this feels comfortable and powerful; in practice, I don't feel like I've got it yet.</p>
+<p>In conclusion: <code>data.tables</code>. Unbearably good for what they're good for, so long as you can navigate the syntax..</p>
+<h4>Resources</h4>
+<p>Mr. Dowle has provided some resources, so I'm promoting them out of the comments for broader use and access.</p>
+<ul>
+<li><a href="http://crantastic.org/packages/data-table">19 independent reviews</a></li>
+<li><a href="http://stackoverflow.com/questions/tagged/data.table">800+ questions</a></li>
+<li><a href="http://datatable.r-forge.r-project.org/">Presentations on homepage</a></li>
+</ul>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:redacted">
+<p>Around here, in the previous version of the post, I had an arbitrarily terrifying <code>data.table</code> calln, which I wrote mostly in frustration. It was unfair, and I've removed it.&#160;<a class="footnote-backref" href="#fnref:redacted" rev="footnote" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
   </div>
   <div id="article_meta">
     <p>Category: <a href="./category/data-science.html">Data Science</a></p>
