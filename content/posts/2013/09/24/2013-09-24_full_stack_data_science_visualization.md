@@ -7,11 +7,11 @@ Tags:
 Summary:
 status: draft
 
-I work in idiosyncratic ways. Truthfully, it's not something I've done on purpose. In my career so far, the weird way has often also been the way I could get what I want to get done the fastest. _Exemplus gratis_: when I realized a need to access data in a data warehouse hosted by my company's parent company, I had roughly these choices:
+I work in idiosyncratic ways. Truthfully, it's not something I've done on purpose. In my career so far, the hack-y way has often also been the way I could get what I want to get done the fastest. _Exemplus gratis_: when I realized a need to access data in a data warehouse hosted by my company's parent company, I had roughly these choices:
 
 1. Be told, very firmly, I was doing it wrong.
 2. Be told what I needed to do was pretty much impossible without a Windows machine[^win].
-3. Teach my R server how to spin up a tiny JVM, load in the JDBC drivers for the data warehouse in question, and use R as my Netezza frontend, by way of emacs.
+3. Teach my R server how to spin up a tiny JVM, load in the JDBC drivers for the data warehouse in question, and use R as my database front-end..
 
 So obviously I went with number three; I always go with number three. Any time I'm told "that can't be done" or "we'll need to get the budget for more resources" or "you can't get there from here!", I have this one-two punch of pathological disbelief and obstinate, defiant "Oh yeah, watch me!" The upside is my reputation for Getting Tricky Crap Done. The downside is... well.
 
