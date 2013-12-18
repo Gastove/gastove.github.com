@@ -37,5 +37,11 @@ Phase I: Framework
 - BOOM
 
 Phase II: Infrastructure (Setting up Postgres)
+- Provision a Postgres DB in Heroku (whee!)
+-- Probably already provisioned, needs to be promoted.
+-- Gonna need to figure out what you wanna do locally.
+- Add deps for Squeryl, C3P0, Postgres to your project/build.scala
+- (Note here about % vs %% in sbt deps)
+
 
 Phase III: Data Model and JSON
