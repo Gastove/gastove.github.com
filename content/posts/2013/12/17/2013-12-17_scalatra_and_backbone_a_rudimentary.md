@@ -66,4 +66,25 @@ Continuing along, this means we're going to:
 - Give configs an `isDevelopmentMode` switch to toggle between dev and prod credentials.
 - Go eat some chocolate or something. Good job!
 
+### Setting Up some Basic Data
+Hokay. So it turns out that this is all going to be very difficult to test in a "real" way without a data model of some shape or form. Lets get to it.
+
+- Base class
+- Extend it
+- Schema
+-- Override column names
+- Boom?
+
+- Switch over to using JSON returns
+
+## BIG FREAKING PROTIP
+Name your Postgres tables in all lower case.
+
+# Notes
+
+```scala
+on(foo)(declare(f => f.name is(named("foo_id"))))
+```
+
+
 Phase III: Data Model and JSON
