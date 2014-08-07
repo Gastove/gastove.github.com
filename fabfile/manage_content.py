@@ -96,7 +96,7 @@ def list_by_status(status='draft'):
             print "\t" + filename
         return
     else:
-        print "No drafts found."
+        print "No {} files found.".format(status)
 
 @task(alias="drafts")
 def list_drafts():
