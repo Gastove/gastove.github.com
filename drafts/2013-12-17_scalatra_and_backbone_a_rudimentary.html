@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet/less" type="text/css" href="../theme/css/style.less">
+  <script src="../theme/js/less-1.3.3.min.js" type="text/javascript"></script>
+  <!-- <link rel="stylesheet" type="text/css" href="../theme/css/style.css"> -->
+
+  <link rel="stylesheet" type="text/css" href="../theme/css/pygments.css">
+  <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=PT+Sans|PT+Serif|PT+Mono">
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width; initial-scale=1.0">
+  <meta name="author" content="Ross Donaldson">
+  <meta name="description" content="Posts and writings by Ross Donaldson">
+
+
+<meta name="keywords" content="">
+
+  <title>
+Scalatra and Backbone: A Rudimentary Tutorial  </title>
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-43979937-2']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+</script>
+</head>
+
+<body>
+  <aside>
+    <div id="user_meta">
+      <a href="..">
+        <img src="http://www.gravatar.com/avatar/a942cea13e537bb0ea754b6d216c3377?size=160" alt="logo">
+      </a>
+      <h2><a href="..">Ross Donaldson</a></h2>
+      <p></p>
+      <ul>
+        <li><a href="http://www.gastove.com" target="_blank">Home</a></li>
+        <li><a href="http://food.gastove.com/" target="_blank">Food</a></li>
+        <li><a href="http://www.twitter.com/Gastove" target="_blank">Twitter</a></li>
+        <li><a href="http://www.github.com/Gastove" target="_blank">Github</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+<p><a href="..">Index</a> &#124; <a href="../archives.html">Archives</a> &#124; Posted on Tue, Dec 17 2013</p>
+    </header>
+
+<article>
+  <div id="article_title">
+    <h3><a href="../drafts/2013-12-17_scalatra_and_backbone_a_rudimentary.html">Scalatra and Backbone: A Rudimentary Tutorial</a></h3>
+  </div>
+  <div id="article_text">
+    <p>[Hey hey verbiage. Figure this bit out better. Background.]</p>
+<p>Stack:
+- Scalatra (Server-side framework)
+- Backbone.js (Front-end framework)
+- Postgres (Backend DB)
+- Squeryl (ORM)
+- C3P0 (Connection Pooling)
+- Heroku (Hosting)
+- git/github (implied)</p>
+<h2>Resources</h2>
+<ul>
+<li><a href="http://www.scalatra.org/guides/deployment/heroku.html">Scalatra on Heroku</a></li>
+</ul>
+<h2>Setup and Init</h2>
+<p>Phase I: Framework
+- Use g8 to setup project framework. (Scalatra docs)
+- Do a little tidying up:
+-- Move Servlet and Bootstrap out of src/main/scala/com/whatever/hoodly-hoo into src/main/scala (this is purely because it annoys the crap out of me)
+- git init (legit)
+- Add JettyLauncher and Main Method (in Scalatra on Heroku docs)
+- Tweak project/build.scala (in Scalatra on Heroku docs)
+- Test in browser (sbt clean compile stage, then fire up sbt and make sure container:start gets you someplace)
+- Add Procfile and check for Heroku set-up-correctly-ness with Foreman
+- Freshen up Git
+- Add to heroku
+- BOOM</p>
+<p>Phase II: Infrastructure (Setting up Postgres)
+- Provision a Postgres DB in Heroku (whee!)
+-- Probably already provisioned, needs to be promoted.
+-- Gonna need to figure out what you wanna do locally.
+- Add deps for Squeryl, C3P0, Postgres to your project/build.scala
+- (Note here about % vs %% in sbt deps)
+- Set up the code for database connections so that Squeryl methods can be mixed in to Servlets
+- Stop here for some Real Talk about Postgres</p>
+<p>SO: You're gonna run a remote Postgres DB on Heroku. That's a superb idea. Here's the question: what do you do about local development? You can either:
+A) Run a local Postgres instance and connect to it. This means setting up environment switches so that your app does the right thing depending on where it runs.
+B) Connect directly to your remote Postgres instance, but use a dev DB instead of Prod (something to decouple concerns).</p>
+<p>I say: absolutely do A. Particularly simple is a one-two punch of a Heroku environment variable -- mine is called <code>DEVSITE</code> -- with Scalatras <code>context.setInitParameters</code>.</p>
+<h3>Punch One</h3>
+<p>The Heroku toolbelt comes with a dandy little tool called Foreman. While Foreman isn't perfect (it can be... a bit of a pain in the butt for things like automatic code reloading for your Scala code), it does two things very well: it launches your app precisely as Heroku will; it automatically loads in a .env file from the root of your app's file structure. Boom. Credentials, <code>DEVSITE</code> flags, everything can go in there, happy as can be.</p>
+<h3>Punch Two</h3>
+<p>Unlike a Java app, which handles configs in XML, Scalatra uses some wizardry to transfer configuration back in to itself, all in Scala. (Srsly, thanks for that one guys.) In particular, we gain use of the <code>ScalatraBootstrap</code> file -- which is already calling our database init and destroy methods. The aforementioned <code>context.setInitParameters</code> can be used to set the Scalatra environment to whatever you like; if it's set to any value that starts with the string 'dev', Scalatra's built-in <code>isDevelopmentMode</code> function returns true. Simple!</p>
+<p>Continuing along, this means we're going to:
+- Install Postgres locally
+- Hardcode local Postgres configs so we can make sure we're connecting/reading/writing
+-- This means taking a detour through setting up a very basic Squeryl schema and data model
+- Setup a .env file to contain our local Postgres configs, and a <code>DEVSITE=True</code> flag
+- Remove hardcoded configs, replace with reading configs from the environment
+- Give configs an <code>isDevelopmentMode</code> switch to toggle between dev and prod credentials.
+- Go eat some chocolate or something. Good job!</p>
+<h3>Setting Up some Basic Data</h3>
+<p>Hokay. So it turns out that this is all going to be very difficult to test in a "real" way without a data model of some shape or form. Lets get to it.</p>
+<ul>
+<li>Base class</li>
+<li>Extend it</li>
+<li>Schema
+-- Override column names</li>
+<li>
+<p>Boom?</p>
+</li>
+<li>
+<p>Switch over to using JSON returns</p>
+</li>
+</ul>
+<h2>BIG FREAKING PROTIP</h2>
+<p>Name your Postgres tables in all lower case.</p>
+<h1>Notes</h1>
+<div class="highlight"><pre><span class="n">on</span><span class="o">(</span><span class="n">foo</span><span class="o">)(</span><span class="n">declare</span><span class="o">(</span><span class="n">f</span> <span class="k">=&gt;</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="n">is</span><span class="o">(</span><span class="n">named</span><span class="o">(</span><span class="s">&quot;foo_id&quot;</span><span class="o">))))</span>
+</pre></div>
+
+
+<p>Phase III: Data Model and JSON</p>
+  </div>
+  <div id="article_meta">
+    <p>Category: <a href="../category/.html"></a></p>
+    <p>Tags:
+      <a href="../tag/.html"></a>    </p>
+    <p>Comments: <a href="#" onclick="javascript:toggleComments();return false;">toggle</a></p>
+  </div>
+
+    <div id="article_comments" style="display:block">
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+           var disqus_identifier = "drafts/2013-12-17_scalatra_and_backbone_a_rudimentary.html";
+           (function() {
+           var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+           dsq.src = 'http://veryodd.disqus.com/embed.js';
+           (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+          })();
+        </script>
+    </div>
+
+</article>
+
+    <footer>
+<p><a href="../" class="button_accent">&larr; Back to Index</a></p>
+<script language="javascript">
+    function toggleComments() {
+        var commentDiv = document.getElementById("article_comments");
+        (commentDiv.style.display == "none") ? commentDiv.style.display = "block" : commentDiv.style.display = "none";
+        return false;
+    }
+</script>
+    </footer>
+
+    <div id="ending_message">
+      <p>&copy Ross Donaldson. Built using <a href="http://getpelican.com" target="_blank">Pelican</a>. Theme by Giulio Fidente on <a href="https://github.com/giulivo/pelican-svbhack" target="_blank">github</a>. .</p>
+    </div>
+  </main>
+</body>
+</html>

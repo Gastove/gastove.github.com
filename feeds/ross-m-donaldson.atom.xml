@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Strangely Specific and Very Odd</title><link href="http://blog.gastove.com/" rel="alternate"></link><link href="http://blog.gastove.com/feeds/ross-m-donaldson.atom.xml" rel="self"></link><id>http://blog.gastove.com/</id><updated>2013-09-14T00:00:00-07:00</updated><entry><title>Syntax Syntax Syntax: Standardizing on `data.table` in R</title><link href="http://blog.gastove.com/2013-09-14_bloody_syntax.html" rel="alternate"></link><updated>2013-09-14T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-09-14:2013-09-14_bloody_syntax.html</id><summary type="html">&lt;p&gt;&lt;strong&gt;Update&lt;/strong&gt; The creator of &lt;code&gt;data.table&lt;/code&gt;, Matthew Dowle, found this post and took the time to do some thorough commenting. You should read our discussion below; you should also be aware that I've updated the article. I'm doing two things:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Making a clearer separation between my feelings of "ARGH, R Syntax" and what I think of &lt;code&gt;data.table&lt;/code&gt;'s syntax.&lt;/li&gt;
+&lt;li&gt;Corrected a couple of syntax errors.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3&gt;Syntax&lt;/h3&gt;
+&lt;p&gt;The amount of data in my work, like so many things, creeps. I show a chart of five things, people ask for the other six. I show two weeks of history, I'm asked for four more. I instrument a feature and then it's deployed on six new platforms and how's it performing, for all 11 things, with six weeks of history?&lt;/p&gt;
+&lt;p&gt;There's plenty of good news. Conceptually, processing two gigabytes of data isn't any different than processing one; doubling the amount of history displayed in a chart raises questions of clarity and data display, but on its face, little else. With... one or two exceptions, all of which have to do with performance. This bites you from two places:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;The Data Store: unless you're working with something like Hadoop, it's unlikely you'll be able to do much cleanup on your data before it leaves the datastore. MySQL lacks... basically everything you could ever want, and probably can't perform meaningful aggregations in MySQL anyways. The latest version of Hive supports windowing functions, which can -- broadly speaking -- be used for outlier cleanup. Me personally? I'm not on the latest version. Conclusion: data must be aggregated after the dataset is pulled.&lt;/li&gt;
+&lt;li&gt;Development: do you work in R? I sure do. Did you know that R can't think about anything it can't hold in active memory? No paging, cool as paging is, and object serialization can, frankly, be a pain in the arse. A side-effect of R's memory limit is that there's only one R Session process, and &lt;em&gt;that&lt;/em&gt; process is limited by system architecture. A 32-bit system can only allocate four-gigabytes-ish of memory, minus whatever the OS itself uses (maybe up to a gig?). Now, suddenly, you have a maximum total workspace for all objects and processes of... about three gigabytes. It's amazing how fast that goes away. If you're lucky, you've got a 64-bit architecture (which R will fully support) and gobs of RAM. If you're me, you have the former and pine for the latter.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;So! Time to crunch a file that occupies 1.2gb on disk. Many R operations -- especially those on &lt;code&gt;data.frames&lt;/code&gt; -- create full copies of the source data as they act on them. This is a pernicious problem; &lt;code&gt;data.frame&lt;/code&gt;s are ubiquitous, and incredibly useful -- partly for the expressive power of a columnar data structure, and partly for the rich set of tools developed specifically to act on &lt;code&gt;data.frame&lt;/code&gt;s. Few of those tools solve the memory issue, alas. (For instance: much as I love &lt;a href="http://plyr.had.co.nz/"&gt;plyr&lt;/a&gt;, memory efficient... it is not, especially if you want to parallelize the operation across more than one processor core.) Now what do you do?&lt;/p&gt;
+&lt;p&gt;My answer is &lt;a href="http://datatable.r-forge.r-project.org/"&gt;data.table&lt;/a&gt;. Let's start with some good news:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;&lt;code&gt;data.table&lt;/code&gt; is fast. I wont reproduce the timing tables from the manual, but the web page asserts: 10+ times faster than &lt;code&gt;tapply()&lt;/code&gt;; 100+ times faster than &lt;code&gt;==&lt;/code&gt;; 500+ times faster than &lt;code&gt;DF[i,j]&amp;lt;-v alue&lt;/code&gt;. So far, in terms of speed, it's everything I've ever dreamed of and a bag of chips.&lt;/li&gt;
+&lt;li&gt;It's gentler, active-memory-wise. Many &lt;code&gt;data.table&lt;/code&gt; operations are optimized to act &lt;em&gt;on the extant object&lt;/em&gt; rather than by copying it and modifying the copy. Many &lt;code&gt;data.table&lt;/code&gt; operations return a new, updated version of the same table. This is very good.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;data.table&lt;/code&gt; &lt;em&gt;extends&lt;/em&gt; &lt;code&gt;data.frame&lt;/code&gt;. So, you can use a &lt;code&gt;data.table&lt;/code&gt; approximately anywhere you can use a &lt;code&gt;data.frame&lt;/code&gt;.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Let's dwell on that last one for a moment. &lt;code&gt;data.table&lt;/code&gt; is nice because it gives you exceptionally brisk versions of many of your favorite &lt;code&gt;data.frame&lt;/code&gt; operations -- like &lt;code&gt;summary&lt;/code&gt;. &lt;code&gt;subset&lt;/code&gt; is implemented for &lt;code&gt;data.table&lt;/code&gt;, that's nice. But if you're like me and write functions that ingest &lt;code&gt;data.frames&lt;/code&gt;, you're in for a little heartache.&lt;/p&gt;
+&lt;p&gt;Take subsetting. In a &lt;code&gt;data.frame&lt;/code&gt;, you might do something like &lt;code&gt;df2 &amp;lt;- df[df$foo == 'a', ]&lt;/code&gt; -- or, to go by rows and columns, &lt;code&gt;df2 &amp;lt;- df[df$foo == 'a', c('col1', 'col2')]&lt;/code&gt;. This metaphor is familiar to R; first, we evaluate true/false on all the rows, then we return all the rows that evaluate true, subsetted by a vector of quoted column names. But in a &lt;code&gt;data.table&lt;/code&gt;, things fly a little different: first we set a &lt;code&gt;key&lt;/code&gt;, and the &lt;code&gt;data.table&lt;/code&gt; sorts itself by that key. Then, we pass an expression:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;setkey&lt;span class="p"&gt;(&lt;/span&gt;dt&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;foo&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+dt2 &lt;span class="o"&gt;&amp;lt;-&lt;/span&gt; dt&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; list&lt;span class="p"&gt;(&lt;/span&gt;col1&lt;span class="p"&gt;,&lt;/span&gt; col2&lt;span class="p"&gt;)]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;&lt;code&gt;data.table&lt;/code&gt; documentation refers to this as &lt;code&gt;dt[i, j]&lt;/code&gt; syntax; both &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;j&lt;/code&gt; are full-blown expressions, evaluated at execution. Behavior can be... problematic, in terms of what you'd expect from a &lt;code&gt;data.frame&lt;/code&gt;:&lt;/p&gt;
+&lt;table class="highlighttable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;dt&lt;span class="p"&gt;[&lt;/span&gt;dt&lt;span class="o"&gt;$&lt;/span&gt;foo &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="c1"&gt;# Returns exactly what you&amp;#39;d expect -- rows where dt$foo == &amp;#39;a&amp;#39; evaluates to `TRUE`&lt;/span&gt;
+dt&lt;span class="p"&gt;[&lt;/span&gt;dt&lt;span class="o"&gt;$&lt;/span&gt;foo &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="c1"&gt;# Also fine!&lt;/span&gt;
+dt&lt;span class="p"&gt;[&lt;/span&gt;foo &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;a&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;bar&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="c1"&gt;# Returns... &amp;#39;bar&amp;#39;! The string literal, &amp;#39;bar&amp;#39;. Huzzah.&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;So that's a mess, especially if you're passing a &lt;code&gt;data.table&lt;/code&gt; in to a function that was written for a &lt;code&gt;data.frame&lt;/code&gt;. As Matthew Dowle points out in the comments, this behavior &lt;em&gt;is&lt;/em&gt; core to &lt;code&gt;data.table&lt;/code&gt;, and is discussed extensively in the documentation; that's a damn fine point. The counter point is that calling &lt;code&gt;dt[foo == 'a', 'bar']&lt;/code&gt; &lt;em&gt;doesn't fail&lt;/em&gt;, even though what it returns is not likely to be useful as a result. While you're in the process of learning to think &lt;code&gt;data.table&lt;/code&gt;, this can be a headache -- and I'd encourage anybody making the switch to start debugging with the question, "am I subsetting the right way?"&lt;/p&gt;
+&lt;p&gt;Now, there is, of course, a bright side, and very bright it is:&lt;/p&gt;
+&lt;table class="highlighttable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4
+5
+6
+7&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="c1"&gt;# Subsetting by variable evaluation, the data.frame way:&lt;/span&gt;
+cond1 &lt;span class="o"&gt;&amp;lt;-&lt;/span&gt; expression&lt;span class="p"&gt;(&lt;/span&gt;df&lt;span class="o"&gt;$&lt;/span&gt;foo &lt;span class="o"&gt;==&lt;/span&gt; var1&lt;span class="p"&gt;)&lt;/span&gt;
+cond2 &lt;span class="o"&gt;&amp;lt;-&lt;/span&gt; expression&lt;span class="p"&gt;(&lt;/span&gt;df&lt;span class="o"&gt;$&lt;/span&gt;bar &lt;span class="o"&gt;==&lt;/span&gt; var2&lt;span class="p"&gt;)&lt;/span&gt;
+df2 &lt;span class="o"&gt;&amp;lt;-&lt;/span&gt; df&lt;span class="p"&gt;[&lt;/span&gt;eval&lt;span class="p"&gt;(&lt;/span&gt;cond1&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&lt;/span&gt; eval&lt;span class="p"&gt;(&lt;/span&gt;cond2&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="p"&gt;]&lt;/span&gt;
+
+&lt;span class="c1"&gt;# The data.table way&lt;/span&gt;
+dt2 &lt;span class="o"&gt;&amp;lt;-&lt;/span&gt; dt&lt;span class="p"&gt;[&lt;/span&gt;J&lt;span class="p"&gt;(&lt;/span&gt;var1&lt;span class="p"&gt;,&lt;/span&gt; var2&lt;span class="p"&gt;)]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;This is the advantage of &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;j&lt;/code&gt; being expressions already -- you can simply put everything in place, variables and all, and it evaluates. Further, &lt;code&gt;data.table&lt;/code&gt; implements binary search on its keys; this makes for a speed increase over &lt;code&gt;data.frame&lt;/code&gt; that will make your heart sing. And honestly, we aren't done with the good news.&lt;/p&gt;
+&lt;p&gt;Assigning new columns is where things really get good, but also... weird looking.&lt;/p&gt;
+&lt;table class="highlighttable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt; 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="c1"&gt;# Assign a single new column&lt;/span&gt;
+dt&lt;span class="p"&gt;[,&lt;/span&gt; new.col &lt;span class="o"&gt;:=&lt;/span&gt; mean&lt;span class="p"&gt;(&lt;/span&gt;col1&lt;span class="p"&gt;)]&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Multiple assigns at once&lt;/span&gt;
+dt&lt;span class="p"&gt;[&lt;/span&gt;
+&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="s"&gt;&amp;#39;:=&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+    new.col.1 &lt;span class="o"&gt;=&lt;/span&gt; val1&lt;span class="p"&gt;,&lt;/span&gt;
+    new.col.2 &lt;span class="o"&gt;=&lt;/span&gt; val2
+    &lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="p"&gt;]&lt;/span&gt;
+
+&lt;span class="c1"&gt;# And the coup de grace, assign with aggregate, followed by merge on keys:&lt;/span&gt;
+dt&lt;span class="p"&gt;[&lt;/span&gt;
+&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;span class="s"&gt;&amp;#39;:=&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+    new.col.1 &lt;span class="o"&gt;=&lt;/span&gt; sum&lt;span class="p"&gt;(&lt;/span&gt;col1&lt;span class="p"&gt;),&lt;/span&gt;
+    new.col.2 &lt;span class="o"&gt;=&lt;/span&gt; mean&lt;span class="p"&gt;(&lt;/span&gt;col2&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="p"&gt;)&lt;/span&gt;
+by&lt;span class="o"&gt;=&lt;/span&gt;list&lt;span class="p"&gt;(&lt;/span&gt;col1&lt;span class="p"&gt;,&lt;/span&gt; col2&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="p"&gt;]&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Dowle points out there&amp;#39;s a vastly clearer syntax available! Much nicer:&lt;/span&gt;
+dt&lt;span class="p"&gt;[&lt;/span&gt;
+list&lt;span class="p"&gt;(&lt;/span&gt;new.col.1&lt;span class="p"&gt;,&lt;/span&gt; new.col2&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;:=&lt;/span&gt; list&lt;span class="p"&gt;(&lt;/span&gt;sum&lt;span class="p"&gt;(&lt;/span&gt;col1&lt;span class="p"&gt;),&lt;/span&gt; mean&lt;span class="p"&gt;(&lt;/span&gt;col2&lt;span class="p"&gt;))&lt;/span&gt;
+&lt;span class="p"&gt;,&lt;/span&gt; by &lt;span class="o"&gt;=&lt;/span&gt; group
+&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;You want a fast merge? Holy shit: &lt;code&gt;dt1[dt2]&lt;/code&gt; will join on the keys of each &lt;code&gt;data.table&lt;/code&gt;, and it will do it very fast (this is called &lt;code&gt;J()&lt;/code&gt; in dt-parlance). Of course, both &lt;code&gt;data.table&lt;/code&gt;s need their keys set, and new &lt;code&gt;data.table&lt;/code&gt;s don't emerge from aggregation keyed. You can also do remarkably fast time series joins like this, but... well, that brings me to the part I really dislike:&lt;/p&gt;
+&lt;p&gt;The syntax of &lt;code&gt;data.table&lt;/code&gt; looks nothing like the syntax of anything else I regularly use in R -- a problem not aided by the extreme heterogeneity of the entire 3rd Party package ecosystem. Now: Mr. Dowle is quick to point out that &lt;code&gt;data.table&lt;/code&gt; is inspired by the &lt;code&gt;A[B]&lt;/code&gt; syntax of matrices, which is from &lt;code&gt;base&lt;/code&gt;, and he's right. I feel a little odd admitting this: I'm not sure I've used a matrix in R yet, and so to me this syntax was new. In some sense, though, that's not really the point. The point is something I should write a clear, focused, single-purpose post about. The short version is this: Everybody has their own notion of how a particular computation should be executed, which destroys conceptual portability. Once you finally get your brain around the &lt;code&gt;apply&lt;/code&gt; family of methods, you get to wrap your brain around &lt;code&gt;plyr&lt;/code&gt;; once you grok &lt;code&gt;plyr&lt;/code&gt;, you'll be delighted to learn that nothing you know transfers to &lt;code&gt;data.table&lt;/code&gt;, and neither &lt;code&gt;data.table&lt;/code&gt; nor &lt;code&gt;plyr&lt;/code&gt; have anything to do with &lt;code&gt;ggplot2&lt;/code&gt;. It becomes somewhat mandatory to get to know the underpinnings of each set of functions; &lt;code&gt;plyr&lt;/code&gt;, for instance, is preferable to me for CPU-intensive tasks because it can be easily parallelized, while &lt;code&gt;data.table&lt;/code&gt; is the clear winner for memory-bound tasks. The footprint of R as a language is messy. I'm still trying to sort through how much of a problem I think that really is, but I'm leaning towards "pretty big."&lt;/p&gt;
+&lt;p&gt;Circling properly back to &lt;code&gt;data.table&lt;/code&gt;: one gets the feeling that there's some truly blackbelt stuff to be done if you can just figure out &lt;em&gt;how&lt;/em&gt;.&lt;sup id="fnref:redacted"&gt;&lt;a class="footnote-ref" href="#fn:redacted" rel="footnote"&gt;1&lt;/a&gt;&lt;/sup&gt; For instance: &lt;code&gt;data.table&lt;/code&gt; is capable of powerful time-series joins, which I still don't grok, and you can chain subsetting calls using the form &lt;code&gt;dt[i, j][i, j, by=foo][i, j, with=F, roll=T]&lt;/code&gt; -- each resulting subset is passed directly in to the following command. As a Scala developer, this feels comfortable and powerful; in practice, I don't feel like I've got it yet.&lt;/p&gt;
+&lt;p&gt;In conclusion: &lt;code&gt;data.tables&lt;/code&gt;. Unbearably good for what they're good for, so long as you can navigate the syntax..&lt;/p&gt;
+&lt;h4&gt;Resources&lt;/h4&gt;
+&lt;p&gt;Mr. Dowle has provided some resources, so I'm promoting them out of the comments for broader use and access.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="http://crantastic.org/packages/data-table"&gt;19 independent reviews&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://stackoverflow.com/questions/tagged/data.table"&gt;800+ questions&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://datatable.r-forge.r-project.org/"&gt;Presentations on homepage&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class="footnote"&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id="fn:redacted"&gt;
+&lt;p&gt;Around here, in the previous version of the post, I had an arbitrarily terrifying &lt;code&gt;data.table&lt;/code&gt; calln, which I wrote mostly in frustration. It was unfair, and I've removed it.&amp;#160;&lt;a class="footnote-backref" href="#fnref:redacted" rev="footnote" title="Jump back to footnote 1 in the text"&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;</summary><category term="rstats"></category><category term="data.table"></category><category term="standards"></category><category term="data science"></category></entry><entry><title>Android Shape Password Generation</title><link href="http://blog.gastove.com/2013-09-13_android_shape_password_generation.html" rel="alternate"></link><updated>2013-09-13T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-09-13:2013-09-13_android_shape_password_generation.html</id><summary type="html">&lt;p&gt;My friend Steve recently posed an interesting challenge to me:&lt;/p&gt;
+&lt;p&gt;"i thought of it on the plane back from vermont, basically, calculating the potential passwords possible on an android phone."&lt;/p&gt;
+&lt;p&gt;Very interesting. The full problem statement goes a little like this:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;An Android Password has nine available nodes in a 3x3 grid.&lt;/li&gt;
+&lt;li&gt;A valid password has no fewer than four and no more than nine nodes.&lt;/li&gt;
+&lt;li&gt;A node can only connect to a "reachable" node -- that is, from the top left corner, your next move cannot be to the bottom right corner.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The rules of reach-ability are by far the trickiest bit of this. How do you tell a node which Other Node it can get to? Particularly without my personal pet problem: overflowing the heap. (Or the stack. Or both.)&lt;/p&gt;
+&lt;p&gt;Steve is one of the smartest computer scientists I know, has his Ph.D. , and deeply groks graph theory. I'm a musician-turned-hacker with too much free time and a dodgy understanding of the classic algorithms. His an my approaches? Likely to look very different. Here, I'll detail mine.&lt;/p&gt;
+&lt;p&gt;I started with the thought that the smallest conceptual unit here is a Node. Nodes build in to a Path. A Node should know its context, but a Path should know the rules of path-building -- including exceptions to the standard rules. Armed with this idea, I wrote two hundred-odd lines of Scala and melted the heap.&lt;/p&gt;
+&lt;p&gt;Fantastic.&lt;/p&gt;
+&lt;p&gt;As a programmer I operate in much the same way I do as a writer: when I'm writing serious essays, I write down &lt;em&gt;everything&lt;/em&gt;, censoring as little as possible, just slathering the page in words. As I write more and more and more, I begin to perceive the underlying structure of what I'm up to -- and it's a structure I have to find a way to materialize outside my own head in order to understand it clearly. Then there's A Moment of Clarity, a click, when things suddenly drop in to place and I start removing chaff in huge chunks, carving away at the mass I created to leave an essential, spare Thing.&lt;/p&gt;
+&lt;p&gt;So with writing, so with my code. I wrote vastly more code than I needed, refactored, wrote more code, got it compiling, branched, and wrote more code until finally I noticed something incredibly simple:&lt;/p&gt;
+&lt;p&gt;One node can always reach any other node as long as you add the node that's "in the way" to the Path.&lt;/p&gt;
+&lt;p&gt;When I'm coding, I call this moment, "the Collapse". It's the point at which I can suddenly see the underlying structure I've been feeling out and I can work to realize it, when I can stop laying down material and start carving away at it. The above let me peel away more than half the code I'd put in place, and while the result wasn't bug free (editing still required), it was A) comprehensible, B) terse, C) fixable, and D) kinda elegant. It's this last that often is my surest indicator I'm on the right path -- when things stop looking less &lt;em&gt;eugh&lt;/em&gt; and more &lt;em&gt;oooh!&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;The final product needs some space to run; I had planned it as an interactive demo on my web page, but it uses far more RAM than Heroku will allow me&lt;sup id="fnref:1"&gt;&lt;a class="footnote-ref" href="#fn:1" rel="footnote"&gt;1&lt;/a&gt;&lt;/sup&gt;. The code lives in its original state in my repo for gastove.com, but I also pulled it all together, like so:&lt;/p&gt;
+&lt;table class="highlighttable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;  1
+  2
+  3
+  4
+  5
+  6
+  7
+  8
+  9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 21
+ 22
+ 23
+ 24
+ 25
+ 26
+ 27
+ 28
+ 29
+ 30
+ 31
+ 32
+ 33
+ 34
+ 35
+ 36
+ 37
+ 38
+ 39
+ 40
+ 41
+ 42
+ 43
+ 44
+ 45
+ 46
+ 47
+ 48
+ 49
+ 50
+ 51
+ 52
+ 53
+ 54
+ 55
+ 56
+ 57
+ 58
+ 59
+ 60
+ 61
+ 62
+ 63
+ 64
+ 65
+ 66
+ 67
+ 68
+ 69
+ 70
+ 71
+ 72
+ 73
+ 74
+ 75
+ 76
+ 77
+ 78
+ 79
+ 80
+ 81
+ 82
+ 83
+ 84
+ 85
+ 86
+ 87
+ 88
+ 89
+ 90
+ 91
+ 92
+ 93
+ 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;scala.math.abs&lt;/span&gt;
+
+&lt;span class="k"&gt;object&lt;/span&gt; &lt;span class="nc"&gt;AndroidPasswordGenerator&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Array&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;])&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;grid&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="nc"&gt;NodeGrid&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;generateGrid&lt;/span&gt;
+    &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;paths&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;findPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;grid&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;EmptyPath&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;paths&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;foreach&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;&lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;findPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nodes&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;List&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;],&lt;/span&gt; &lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidPath&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;List&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;AndroidPath&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;nodes&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;flatMap&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;node&lt;/span&gt; &lt;span class="k"&gt;=&amp;gt;&lt;/span&gt;
+       &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;newPath&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;addToPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+       &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;remainingNodes&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;nodes&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;filter&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;node&lt;/span&gt; &lt;span class="k"&gt;=&amp;gt;&lt;/span&gt;
+         &lt;span class="o"&gt;!&lt;/span&gt;&lt;span class="n"&gt;newPath&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+       &lt;span class="o"&gt;}&lt;/span&gt;
+       &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;newPath&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;=&lt;/span&gt; &lt;span class="mi"&gt;9&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="nc"&gt;List&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;newPath&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+       &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;newPath&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;length&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;=&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="n"&gt;findPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;remainingNodes&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;newPath&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="nc"&gt;List&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;newPath&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+       &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="n"&gt;findPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;remainingNodes&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;newPath&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+
+  &lt;span class="k"&gt;lazy&lt;/span&gt; &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;neighbors&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;getAdjacentNodes&lt;/span&gt;
+
+  &lt;span class="k"&gt;override&lt;/span&gt; &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;toString&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;&amp;lt;&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;,&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;&amp;gt;&amp;quot;&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+      &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;diff&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;),&lt;/span&gt; &lt;span class="n"&gt;diff&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;diff&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+      &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="n"&gt;abs&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;getAdjacentNodes&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;List&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;inRange&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;param&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Boolean&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;param&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;param&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;(-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;toList&lt;/span&gt;
+      &lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;flatMap&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;xMod&lt;/span&gt; &lt;span class="k"&gt;=&amp;gt;&lt;/span&gt;
+        &lt;span class="o"&gt;(-&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+          &lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;toList&lt;/span&gt;
+          &lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;map&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;yMod&lt;/span&gt; &lt;span class="k"&gt;=&amp;gt;&lt;/span&gt;
+            &lt;span class="nc"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;xMod&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;yMod&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+          &lt;span class="o"&gt;}&lt;/span&gt;
+      &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;filter&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;node&lt;/span&gt; &lt;span class="k"&gt;=&amp;gt;&lt;/span&gt;
+      &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;inRange&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;inRange&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt; &lt;span class="o"&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class="n"&gt;node&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="c1"&gt;// Grid Generator&lt;/span&gt;
+&lt;span class="k"&gt;object&lt;/span&gt; &lt;span class="nc"&gt;NodeGrid&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;generateGrid&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;List&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;).&lt;/span&gt;&lt;span class="n"&gt;toList&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;flatMap&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="k"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;).&lt;/span&gt;&lt;span class="n"&gt;toList&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;map&lt;/span&gt;&lt;span class="o"&gt;{&lt;/span&gt;&lt;span class="n"&gt;y&lt;/span&gt; &lt;span class="k"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="nc"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;y&lt;/span&gt;&lt;span class="o"&gt;)}}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="c1"&gt;// Base Path Class&lt;/span&gt;
+&lt;span class="k"&gt;abstract&lt;/span&gt; &lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;AndroidPath&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;List&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;isEmpty&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Boolean&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Boolean&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;addToPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidPath&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;toString&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;EmptyPath&lt;/span&gt; &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;AndroidPath&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;List&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="nc"&gt;List&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;isEmpty&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="kc"&gt;true&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Boolean&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="kc"&gt;false&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;addToPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidPath&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;
+    &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;Path&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nc"&gt;List&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+
+  &lt;span class="k"&gt;override&lt;/span&gt; &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;toString&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;&amp;lt;Empty Path&amp;gt;&amp;quot;&lt;/span&gt;
+
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Path&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;List&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;])&lt;/span&gt; &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;AndroidPath&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;length&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;length&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;isEmpty&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Boolean&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="kc"&gt;false&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Boolean&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;node&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;addToPath&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Path&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;head&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;neighbors&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+      &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;Path&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt; &lt;span class="o"&gt;+:&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+      &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;interstitial&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;getInterstitialNode&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;interstitial&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+        &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;Path&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt; &lt;span class="o"&gt;+:&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="k"&gt;else&lt;/span&gt;
+        &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;Path&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt; &lt;span class="o"&gt;+:&lt;/span&gt; &lt;span class="n"&gt;interstitial&lt;/span&gt; &lt;span class="o"&gt;+:&lt;/span&gt; &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;getInterstitialNode&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;candidateNode&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;AndroidNode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;
+    &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;head&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;candidateNode&lt;/span&gt;
+
+  &lt;span class="k"&gt;override&lt;/span&gt; &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;toString&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;
+      &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;reverse&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;mkString&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;-&amp;gt;&amp;quot;&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;
+
+&lt;p&gt;Now, we just have to see how Steve solved it. Probably lasers.&lt;/p&gt;
+&lt;div class="footnote"&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id="fn:1"&gt;
+&lt;p&gt;Which is not saying much. Heroku gives you 512mb per 1x Dyno. Feh.&amp;#160;&lt;a class="footnote-backref" href="#fnref:1" rev="footnote" title="Jump back to footnote 1 in the text"&gt;&amp;#8617;&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;</summary><category term="Android"></category><category term="Problems"></category><category term="Scala"></category></entry><entry><title>Scalatra, Scalate, Jade, and Markdown: Together at Last</title><link href="http://blog.gastove.com/2013-09-03_scalatra_scalate_jade_markdown.html" rel="alternate"></link><updated>2013-09-03T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-09-03:2013-09-03_scalatra_scalate_jade_markdown.html</id><summary type="html">&lt;p&gt;So I'm awfully fond of Scala, so when I got going building web apps, &lt;a href="www.scalatra.org"&gt;Scalatra&lt;/a&gt; seemed like an excellent choice. (I'm natively wary of things like Rails, and the Play! framework seemed more-or-less of Rails' ilk.) Scalatra supports templating via &lt;a href="http://scalate.fusesource.org"&gt;Scalate&lt;/a&gt;, which is as charming as it is flexible -- that is, very. As part of that flexibility, Scalate supports more templating languages than I really need. I like the terse, Haml-based &lt;a href="http://jade-lang.com/"&gt;Jade&lt;/a&gt; myself -- particularly because it supports &lt;a href="http://daringfireball.net/projects/markdown/syntax"&gt;markdown&lt;/a&gt;, meaning your templates can be lovely, dry things.&lt;/p&gt;
+&lt;p&gt;For instance:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="nc"&gt;.foo&lt;/span&gt;
+  &lt;span class="nd"&gt;:markdown&lt;/span&gt;
+    &lt;span class="nd"&gt;This will make a paragraph inside a &amp;#39;foo&amp;#39; element from your CSS, close it correctly, and finish with a properly tagged [hyperlink](www.foo.bar).&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Lovely! Only one problem: it was broken out of the box. Any inclusion of the &lt;code&gt;:markdown&lt;/code&gt; filter caused the compiler to throw a &lt;code&gt;java.lang.NoSuchMethodError&lt;/code&gt; exception. Fan. Tastic.&lt;/p&gt;
+&lt;p&gt;So I started hacking, and tried a bunch of things that failed -- including, ironically, the correct answer implemented slightly incorrectly. I owe my eventual success to &lt;a href="http://stackoverflow.com/questions/18345085/java-lang-nosuchmethoderror-in-scalatra-using-scalate-with-markdown"&gt;Stack Overflow&lt;/a&gt;. What I suspected turned out to be correct, and goes a little like this:&lt;/p&gt;
+&lt;p&gt;Scalatra comes pre-packed with its own version of Scalate; Scalate comes pre-packaged with its own version of Jade. The problem is, neither Scalatra nor Scalate ever mention that what isn't baked in &lt;em&gt;anywhere&lt;/em&gt; is Scalate's markdown support, which lives in &lt;a href="http://maven.apache.com"&gt;Maven&lt;/a&gt;. I got an inkling of this, and tried:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="c1"&gt;// build.sbt -- wrong!&lt;/span&gt;
+&lt;span class="n"&gt;libraryDependencies&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;org.fusesource.scalamd&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;scalamd&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;1.5&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;There are two errors here; the most problematic is the number 5. &lt;code&gt;scalamd 1.5&lt;/code&gt; is built against Scala 2.8. For my own version, Scala 2.10.0, you need version 1.6, plus an extra % for correct lookup formatting, so:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="c1"&gt;// build.sbt -- right!&lt;/span&gt;
+&lt;span class="n"&gt;libraryDependencies&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;org.fusesource.scalamd&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;%%&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;scalamd&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;1.6&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;BOOM. Works like a charm. And it's an easy fix! I just wish &lt;em&gt;somebody&lt;/em&gt;, anybody at either Scalatra or Scalate HQ would mention the damn dependency! (I've poked at them via Twitter, but while both projects are under active development, the Twitter feeds... aren't, alas.)&lt;/p&gt;
+&lt;p&gt;In any case, I hope this saves people some time. Onwards, to better styled, DRYer, lovelier web apps!&lt;/p&gt;</summary><category term="Tools"></category><category term="Webapp"></category><category term="Scalatra"></category><category term="Scalate"></category><category term="Jade"></category><category term="Scala"></category><category term="Markdown"></category></entry><entry><title>Setting up Emacs Prelude for Multiple SQL Databases and Query Development</title><link href="http://blog.gastove.com/2013-08-26_emacs_prelude_for_sql.html" rel="alternate"></link><updated>2013-08-26T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-08-26:2013-08-26_emacs_prelude_for_sql.html</id><summary type="html">&lt;p&gt;Ah, emacs. What can't you do?&lt;/p&gt;
+&lt;p&gt;...actually, that's the problem. Emacs, for all its splendor, can be an infinite rabbit hole of customization, modification, tweaking, scripting, and parens. I recently discovered &lt;a href="www.github.com/bbatsov/prelude"&gt;Emacs Prelude&lt;/a&gt;, and I recommend it heartily. It does, for the most part, what it says on the tin: "The final product offers an easy to use Emacs configuration for Emacs newcomers and lots of additional power for Emacs power users." Check and check.&lt;/p&gt;
+&lt;p&gt;That still leaves some customization to be done, and a particularly common use case in my work is SQL query development, often in the context of embedded SQL within an automated reporting framework. Developing queries with SQL GUIs like MySQL WorkBench and Sequel Pro is lovely... but I don't always have access to them, and copy-pasting queries from one editor to another is a lovely way to introduce bizarre characters into an otherwise pristine query. (And who doesn't love debugging those!) A better answer would be to manipulate embedded SQL in-place -- in this case, from within Emacs. Fortunately, this isn't hard.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;Emacs has a set of built-in protocols, accessible via &lt;code&gt;sql-*&lt;/code&gt; (e.g., &lt;code&gt;sql-mysql&lt;/code&gt;). They work beautifully, allowing a parallel SQL 'interactive' (or 'SQLi') buffer that's effectively an augmented SQL CLI. The augmentation allows you to ship SQL from the buffer you're editing in to the SQLi buffer for evaluation using one of three basic approaches:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;sql-send-buffer&lt;/code&gt; -- fine for one-off query development but otherwise a little too broad&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sql-send-paragraph&lt;/code&gt; -- better; tries to auto-detect a delimited unit of SQL, but doesn't always work&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;sql-send-region&lt;/code&gt; -- ideal. Ship an arbitrary region in to the SQLi buffer&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The last issue to tackle, then, is this: &lt;code&gt;sql-*&lt;/code&gt; mode can't autoload your local DB configs. Hooray! If you have a &lt;code&gt;my.conf&lt;/code&gt; you're particularly proud of, it wont avail you here - instead, a command like &lt;code&gt;sql-mysql&lt;/code&gt; will leave you entering in your credentials over and over again. There are some &lt;a href="http://stackoverflow.com/questions/5734965/how-can-i-get-emacs-sql-mode-to-use-the-mysql-config-file-my-cnf"&gt;very good&lt;/a&gt; StackOverflow posts about getting around, this, but they all miss two points: I really don't want to have to store my DB credentials in plain text; I have to connect to like twelve different databases.&lt;/p&gt;
+&lt;p&gt;My solution (written up in my Prelude &lt;code&gt;custom.el&lt;/code&gt;) looks like so:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;setq&lt;/span&gt; &lt;span class="nv"&gt;sql-connection-alist&lt;/span&gt;
+      &lt;span class="o"&gt;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="nv"&gt;db01&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-product&lt;/span&gt; &lt;span class="ss"&gt;&amp;#39;mysql&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-server&lt;/span&gt; &lt;span class="nv"&gt;my-server-name&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-user&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;getenv&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;MYSQL_USER&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-password&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;getenv&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;MYSQL_PASSWORD&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-database&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;wordace&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-port&lt;/span&gt; &lt;span class="mi"&gt;3306&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+        &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;db02&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-product&lt;/span&gt; &lt;span class="ss"&gt;&amp;#39;mysql&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-server&lt;/span&gt; &lt;span class="nv"&gt;my-other-server-name&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-user&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;getenv&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;MYSQL_USER&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-password&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;getenv&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;MYSQL_PASSWORD&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-database&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+         &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-port&lt;/span&gt; &lt;span class="mi"&gt;3306&lt;/span&gt;&lt;span class="p"&gt;))))&lt;/span&gt;
+
+&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;defun&lt;/span&gt; &lt;span class="nv"&gt;sql-connect-preset&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;name&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="s"&gt;&amp;quot;Connect to a predefined SQL connection listed in `sql-connection-alist&amp;#39;&amp;quot;&lt;/span&gt;
+  &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;eval&lt;/span&gt; &lt;span class="o"&gt;`&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;let&lt;/span&gt; &lt;span class="o"&gt;,&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;cdr&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;assoc&lt;/span&gt; &lt;span class="nv"&gt;name&lt;/span&gt; &lt;span class="nv"&gt;sql-connection-alist&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+    &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;flet&lt;/span&gt; &lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="nv"&gt;sql-get-login&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;&amp;amp;rest&lt;/span&gt; &lt;span class="nv"&gt;what&lt;/span&gt;&lt;span class="p"&gt;)))&lt;/span&gt;
+      &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-product-interactive&lt;/span&gt; &lt;span class="nv"&gt;sql-product&lt;/span&gt;&lt;span class="p"&gt;)))))&lt;/span&gt;
+
+&lt;span class="c1"&gt;;; Function to load a DB based on its short name&lt;/span&gt;
+&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;defun&lt;/span&gt; &lt;span class="nv"&gt;sql-connect-preset-by-name&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;name&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="s"&gt;&amp;quot;Connect to a DB by entering it&amp;#39;s short name&amp;quot;&lt;/span&gt;
+  &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;interactive&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;DB Name: &amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;sql-connect-preset&lt;/span&gt; &lt;span class="ss"&gt;&amp;#39;name&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+
+&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;global-set-key&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nv"&gt;kbd&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;M-s q&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="ss"&gt;&amp;#39;sql-connect-preset-by-name&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="c1"&gt;; Connect to a db preset by name&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This pleases the hell out of me. Hitting &lt;code&gt;M-s q&lt;/code&gt; prompts me for a server short-name (in this example, 'db01' or 'db02'), and loads my credentials out of environment variables where they're safe and sound. Win!&lt;/p&gt;</summary><category term="Tools"></category><category term="SQL"></category><category term="emacs"></category><category term="GTD"></category></entry><entry><title>Colorization test</title><link href="http://blog.gastove.com/2013-08-11_colorization_test.html" rel="alternate"></link><updated>2013-08-11T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-08-11:2013-08-11_colorization_test.html</id><summary type="html">&lt;p&gt;Okay. Let's colorize, shall we?&lt;/p&gt;
+&lt;table class="highlighttable"&gt;&lt;tr&gt;&lt;td class="linenos"&gt;&lt;div class="linenodiv"&gt;&lt;pre&gt;1
+2
+3
+4
+5
+6
+7
+8&lt;/pre&gt;&lt;/div&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;testfunc&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;moreargs&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="nb"&gt;range&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;101&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;fizzbuzz&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;fizzbuzz&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;fizz&amp;quot;&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;fizzbuzz&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;buzz&amp;quot;&lt;/span&gt;
+    &lt;span class="k"&gt;print&lt;/span&gt; &lt;span class="n"&gt;fizzbuzz&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</summary><category term="Test"></category><category term="Pygments"></category></entry><entry><title>Correcting Text Alignment for Gists in Octopress Themes</title><link href="http://blog.gastove.com/2013-08-11_correcting_text_alignment.html" rel="alternate"></link><updated>2013-08-11T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-08-11:2013-08-11_correcting_text_alignment.html</id><summary type="html">&lt;p&gt;So I'm setting up my hella sweet Octopress blog and I'm feeling pretty sharp and I decide it's time for a theme. What could be better! Gussy the place up a bit. There are &lt;a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes"&gt;bunches of themes&lt;/a&gt; available, so that bit was pretty simple. Installation: boom! Previews: bam! All exactly as easy as advertised.&lt;/p&gt;
+&lt;p&gt;To celebrate, I decide to publish my first github gist.&lt;/p&gt;
+&lt;p&gt;And all the text aligns center.&lt;/p&gt;
+&lt;p&gt;...&lt;/p&gt;
+&lt;p&gt;Okay so I have no idea why anybody would ever, ever do that, but the answer seems to go like so: there's an SCSS template in &lt;code&gt;sass/parts&lt;/code&gt; called &lt;code&gt;_article.scss&lt;/code&gt;. It contains a CSS entry, so (many things removed for brevity):&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="nt"&gt;article&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="nc"&gt;.entry-content&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="nt"&gt;table&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="na"&gt;background&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nv"&gt;$color-gray04&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="na"&gt;border&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="kt"&gt;px&lt;/span&gt; &lt;span class="no"&gt;solid&lt;/span&gt; &lt;span class="nv"&gt;$color-gray03&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="na"&gt;border-spacing&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="na"&gt;margin-top&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="kt"&gt;px&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="nt"&gt;th&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+                &lt;span class="na"&gt;background&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nv"&gt;$color-gray03&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+                &lt;span class="na"&gt;padding&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt; &lt;span class="mi"&gt;15&lt;/span&gt;&lt;span class="kt"&gt;px&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="p"&gt;}&lt;/span&gt;
+            &lt;span class="nt"&gt;td&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;
+                &lt;span class="na"&gt;text-align&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="no"&gt;center&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+            &lt;span class="p"&gt;}&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;That little td definition is the one that gets you, and here's a thing that threw me off for a bit: this same file exists (almost identically) inside &lt;code&gt;.themes/[Your Theme Name]/sass/parts/&lt;/code&gt; -- and changing the theme-specific file does &lt;em&gt;not&lt;/em&gt; override the stuff in &lt;code&gt;[Blog]/sass/parts&lt;/code&gt;. Only tweaking the top-level definiton put my gist back over to the left.&lt;/p&gt;
+&lt;p&gt;I'm pretty much a CSS n00b, so it's entirely likely there's something derpy I'm doing/not getting with this. If any Octopress ninjas out in Blogland have a clearer idea of what's going on than I do, &lt;em&gt;please&lt;/em&gt;... oh wait. This theme doesn't support comments.&lt;/p&gt;
+&lt;p&gt;Tweet at me. That's it. &lt;a href="http://www.twitter.com/Gastove"&gt;With this handy link&lt;/a&gt;&lt;/p&gt;</summary><category term="Octopress"></category><category term="Tools"></category></entry><entry><title>Pure Show-and-Tell: My First Gist</title><link href="http://blog.gastove.com/2013-08-11_my_first_gist.html" rel="alternate"></link><updated>2013-08-11T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-08-11:2013-08-11_my_first_gist.html</id><summary type="html">&lt;p&gt;And now, a barefaced excuse to muck about with Octopress markdown and plugins. Presenting: my first gist. Do you care? The whole works (and some verbiage) after the cut.&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;p&gt;While ambling about the internet trying to style my schamncy new web page, I did two things, one clever and one not:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Clever&lt;/strong&gt;: I realized I didn't want to write my own CSS sheets, because fuck that noise.&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;Not-So-Much&lt;/strong&gt;: I forgot about Twitter Bootstrap.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;I found the pleasing, if peculiar, &lt;a href="www.getskeleton.com"&gt;Skeleton.css&lt;/a&gt; -- which is nice looking and open source and free, and rescales (reasonably) well on mobile. Only problem: the provided page template is in straight HTML, and I'm writing in Scalate's implementation of Jade (itself a reduction of Scaml, which is Scala Haml. Oye.) So, I re-wrote the thing. Maybe this will help another person, ever? (Yeah, I think it's a funny line too.)&lt;/p&gt;
+&lt;h3&gt;The Gist&lt;/h3&gt;
+&lt;p&gt;[gist:id=6201942,file=calavera.jade]&lt;/p&gt;</summary><category term="Gist"></category><category term="Scalatra"></category><category term="Jade"></category><category term="CSS"></category></entry><entry><title>O HAI</title><link href="http://blog.gastove.com/2013-08-11_o_hai.html" rel="alternate"></link><updated>2013-08-11T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-08-11:2013-08-11_o_hai.html</id><summary type="html">&lt;p&gt;Well, fascinating. I've got a blog again now. I haven't had one of these in a bit; no time, no reason, really. I used to blog about food -- but those days are not these days. Maybe I'll write about food again?&lt;/p&gt;
+&lt;p&gt;Anyways. This is mostly blather-based Lorem Ipsum. This blog needs some CSS, and quick; I want to make sure this thing looks good on the Mobiles and the Small Screens, so I needs some content. More soon.&lt;/p&gt;</summary><category term="Octopress"></category><category term="Tools"></category></entry><entry><title>Thoughts on this Site So Far</title><link href="http://blog.gastove.com/2013-08-11_thoughts_on_this_site.html" rel="alternate"></link><updated>2013-08-11T00:00:00-07:00</updated><author><name>Ross M. Donaldson</name></author><id>tag:blog.gastove.com,2013-08-11:2013-08-11_thoughts_on_this_site.html</id><summary type="html">&lt;p&gt;Huh. Okay. This... this kinda seems to be working. So far, this has been an interesting project. Over the last two days, I've spun up a personal web page and a blog, both from code (that is, not using WYSIWYG editors or 3rd Party stuff). I'm using what I can only describe as an Ecclectic Blend of tools -- something I have mixed feelings about. Lets do a little review, after the cut:&lt;/p&gt;
+&lt;!--more--&gt;
+
+&lt;h4&gt;Scalatra&lt;/h4&gt;
+&lt;p&gt;My main site is written in Scala, hosted on Heroku. In all, hosting has been one of the easiest parts; Heroku has some special configuration requirements, but  provides very good, accurate docs, and setup is mostly a breeze. There are, it turns out, several web frameworks for Scala -- most notably &lt;a href="http://liftweb.net/"&gt;Lift&lt;/a&gt;, &lt;a href="http://www.playframework.com/"&gt;Play&lt;/a&gt;, and &lt;a href="www.scalatra.org"&gt;Scalatra&lt;/a&gt;. I've gone with the last of these; so far, it's been easy as can be. Scalatra is intuitive, plays well with Heroku, and is even decently well documented. HTML Templating is handled with Scalate.&lt;/p&gt;
+&lt;p&gt;Ah. Scalate.&lt;/p&gt;
+&lt;p&gt;Scalate is the main game in town for Scala HTML templates, as near as I can tell. On the up side, it's powerful and fast and pretty robust. It supports more templating choices than I'd actually care to make, and that might be the down side. For mostly arbitrary reasons, I got going with Jade -- which is a terse form of Scaml, which in turn is Scala Haml.&lt;/p&gt;
+&lt;p&gt;Perhaps you've already intuited the problem. There are a bunch of templating choices, and I picked the one that's the most abstreuse, the least interoperable, and the hardest to find support for. Scalatra doesn't &lt;em&gt;actually&lt;/em&gt; support all of Jade (&lt;em&gt;cough&lt;/em&gt; inheritance), so finding clear help for Scalatra Jade vs. Jade Itsownself is kind of a mess.&lt;/p&gt;
+&lt;p&gt;All that said: Jade is both easy and fast to write, &lt;em&gt;very&lt;/em&gt; DRY, and about as powerful as you could want. I've made my bed, and now I'll lay in it -- and I don't think that's too bad.&lt;/p&gt;
+&lt;h4&gt;Octopress&lt;/h4&gt;
+&lt;p&gt;I have fallen almost instantly in love with &lt;a href="http://octopress.org/"&gt;Octopress&lt;/a&gt;, a blogging framework that defaults to publishing on Github Pages (as it should be). So far it has been an absolute pleasure to use, though I cannot say the same for most of the themes I've tried. Now: fussing and whining about themes is maybe a dodgy proposition for a guy who couldn't write one to save himself from sharks. But then, that's why I went hunting for third party Octopress themes in the first place. There are &lt;a href="https://github.com/imathis/octopress/wiki/3rd-Party-Octopress-Themes"&gt;a lot of them&lt;/a&gt;. They feature truly beautiful page stylings and truly peculiar CSS choices -- like defaulting to centering the text inside a code block. That's right. Centered. Code.&lt;/p&gt;
+&lt;p&gt;Beyond some CSS-hackery to get code aligned correctly, my only other real trick was setting up syntax highlighting. (Octopress comes with Solar built-in, but I'm not, uh, a fan of Solar.) Thanks to some &lt;a href="http://blog.alestanis.com/2013/02/04/octopress-and-the-twilight-color-scheme/"&gt;very good directions&lt;/a&gt;, getting Twilight going didn't take long at all. And now, I get code blocks like this:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;def&lt;/span&gt; &lt;span class="n"&gt;fizzbuzz&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="n"&gt;in&lt;/span&gt; &lt;span class="n"&gt;range&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;101&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;output&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;output&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;fizz&amp;quot;&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="mi"&gt;5&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;output&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;buzz&amp;quot;&lt;/span&gt;
+        &lt;span class="n"&gt;print&lt;/span&gt; &lt;span class="n"&gt;output&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;{:lang="python"}&lt;/p&gt;
+&lt;p&gt;Being the sort of doofus I am, I got Octopress working, then trotted out to find an emacs plugin to run it. Octopress is a framework that wraps the thorny-but-powerfull Jekyll blogging engine; it figures the emacs package would be &lt;a href="https://github.com/nibrahim/Hyde"&gt;Hyde&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;I want to like Hyde. I really do. It does all these things I want done -- integrating the various &lt;code&gt;rake&lt;/code&gt; commands into my text editor. But man... it just doesn't actually work quite right. If I can hack it into Working, I'll post about it here, but for now I'm Octopress-ing via the shell.&lt;/p&gt;
+&lt;h4&gt;In Conclusion&lt;/h4&gt;
+&lt;p&gt;The web is a lovely place, with a remarkable number of very cool pieces that don't take long to pull together. It takes a little time, sure, and some command line know-how -- but I know have a web presence that makes me smile.&lt;/p&gt;</summary><category term="Octopress"></category><category term="Tools"></category></entry></feed>
