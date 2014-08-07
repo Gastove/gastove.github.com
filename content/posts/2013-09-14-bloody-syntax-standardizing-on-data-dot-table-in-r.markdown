@@ -11,6 +11,7 @@ Summary: `data.frame` is R-standard, and it's great -- like a happy little datab
 1. Making a clearer separation between my feelings of "ARGH, R Syntax" and what I think of `data.table`'s syntax.
 2. Corrected a couple of syntax errors.
 
+### Syntax
 The amount of data in my work, like so many things, creeps. I show a chart of five things, people ask for the other six. I show two weeks of history, I'm asked for four more. I instrument a feature and then it's deployed on six new platforms and how's it performing, for all 11 things, with six weeks of history?
 
 There's plenty of good news. Conceptually, processing two gigabytes of data isn't any different than processing one; doubling the amount of history displayed in a chart raises questions of clarity and data display, but on its face, little else. With... one or two exceptions, all of which have to do with performance. This bites you from two places:
