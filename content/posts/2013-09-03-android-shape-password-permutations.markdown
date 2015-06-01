@@ -5,7 +5,7 @@ Slug: 2013-09-13_android_shape_password_generation
 Tags: Android, Problems, Scala
 Category: Code
 Summary: Taking a stab at generating the full set of legal Android shape passwords.
-draft: True
+Status: Published
 
 My friend Steve recently posed an interesting challenge to me:
 

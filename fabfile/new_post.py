@@ -91,9 +91,7 @@ def _name_is_unique(candidate_path):
 
 def _post_path():
     """ Generate the correct post path and make sure it exists  """
-    date_string_pieces = strftime("%Y,%m,%d", localtime()).split(",")
-    path = "/".join(date_string_pieces)
-    abs_path = os.path.join(ABS_INPUT_PATH, 'posts', path)
+    abs_path = os.path.join(ABS_INPUT_PATH, 'posts')
     if not os.path.exists(abs_path):
         local("mkdir -p %s" % abs_path)
     return abs_path
