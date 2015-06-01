@@ -3,6 +3,7 @@ from fabric.utils import puts
 from blog_config import INPUT_PATH, OUTPUT_PATH
 import git
 import os
+import re
 
 SETTINGS_FILE = 'blog_config.py'
 
@@ -71,3 +72,36 @@ def publish(output = ABS_OUTPUT_PATH):
     if com_stat:
         git.push(live)
     git.change_branch(src)
+
+def list_by_status(status='draft'):
+    statuses_by_name = {}
+    regex = re.compile('^\w+:[\w, .-:]*')
+    for root, directories, files in os.walk(ABS_INPUT_PATH):
+        for filename in files:
+            lines = []
+            with open(os.path.join(root, filename), 'r') as pointer:
+                line = pointer.readline()
+                while(regex.match(line)):
+                    lines.append(regex.match(line).group(0))
+                    line = pointer.readline()
+
+            metadata = {s.split(':')[0]: s.split(':')[1].strip() for s in lines}
+            statuses_by_name[filename] = metadata.get('status', 'published')
+
+    res = [name for name, val in statuses_by_name.iteritems() if val == status]
+
+    if res:
+        print "Found {}:".format("drafts" if status == "draft" else "published")
+        for filename in res:
+            print "\t" + filename
+        return
+    else:
+        print "No {} files found.".format(status)
+
+@task(alias="drafts")
+def list_drafts():
+    return list_by_status()
+
+@task(alias="published")
+def list_published():
+    return list_by_status("published")
